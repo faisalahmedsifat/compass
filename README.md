@@ -30,7 +30,7 @@ Tracks your entire digital workspace in real-time: all 15 windows across VS Code
 | **Contribute code** | [👨‍💻 Contributing](CONTRIBUTING.md) |
 | **Report a bug** | [🐛 Bug Report](https://github.com/faisalahmedsifat/compass/issues/new?template=bug_report.md) |
 | **Request feature** | [💡 Feature Request](https://github.com/faisalahmedsifat/compass/issues/new?template=feature_request.md) |
-| **Read architecture** | [🏗️ System Design](system.md) |
+| **Read architecture** | [🏗️ View Source Code](https://github.com/faisalahmedsifat/compass) |
 
 ---
 
@@ -720,7 +720,7 @@ We're looking for contributors to help build the ultimate workspace intelligence
 3. **👨‍💻 Want to code?** → [Read CONTRIBUTING.md](CONTRIBUTING.md) (10 minutes)
 4. **🧪 Help test?** → Try on your platform and report results (15 minutes)
 
-**[📖 Full Contributing Guide](CONTRIBUTING.md)** | **[🏗️ System Architecture](system.md)**
+**[📖 Full Contributing Guide](CONTRIBUTING.md)** | **[🏗️ Browse Source Code](https://github.com/faisalahmedsifat/compass)**
 
 </div>
 
@@ -831,7 +831,7 @@ open http://localhost:8080   # Test dashboard
 2. **Privacy first** - Never compromise user privacy or local data
 3. **Performance matters** - Keep resource usage minimal  
 4. **Cross-platform** - Consider Windows/Linux when adding features
-5. **Documentation** - Update README and system.md for major changes
+5. **Documentation** - Update README for major changes
 
 ### 🐛 **Found a Bug?**
 
@@ -909,7 +909,7 @@ MIT License - see [LICENSE](LICENSE) file
 | **🐛 Report Bug** | [Create Issue](https://github.com/faisalahmedsifat/compass/issues/new?template=bug_report.md) | Found something broken? Let us know! |
 | **💡 Request Feature** | [Create Issue](https://github.com/faisalahmedsifat/compass/issues/new?template=feature_request.md) | Have an idea? We'd love to hear it! |
 | **👨‍💻 Contribute Code** | [Contributing Guide](CONTRIBUTING.md) | Help build the future of workspace tracking |
-| **📖 Read Architecture** | [System Design](system.md) | Understand how Compass works |
+| **📖 Read Architecture** | [Browse Source Code](https://github.com/faisalahmedsifat/compass) | Understand how Compass works |
 | **💬 Discuss Ideas** | [GitHub Discussions](https://github.com/faisalahmedsifat/compass/discussions) | Community chat and Q&A |
 
 **⭐ Star this repo** if Compass is useful to you!

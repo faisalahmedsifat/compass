@@ -106,7 +106,7 @@ curl http://localhost:8080/api/health  # Check API
 
 ### **Documentation**
 - Update **README.md** for user-facing changes
-- Update **system.md** for architectural changes
+- Update **README.md** for architectural changes
 - Add **code comments** for complex logic
 - Include **examples** in documentation
 
