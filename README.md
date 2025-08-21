@@ -97,7 +97,7 @@ Every 10-30 seconds (adaptive based on activity), Compass captures:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/compass.git
+git clone https://github.com/faisalahmedsifat/compass.git
 cd compass
 
 # Install dependencies
@@ -264,8 +264,8 @@ That's where Compass is heading.
 
 ## 📧 Contact
 
-- Issues: [GitHub Issues](https://github.com/yourusername/compass/issues)
-- Discussions: [GitHub Discussions](https://github.com/yourusername/compass/discussions)
+- Issues: [GitHub Issues](https://github.com/faisalahmedsifat/compass/issues)
+- Discussions: [GitHub Discussions](https://github.com/faisalahmedsifat/compass/discussions)
 - Twitter: [@compass_app](https://twitter.com/compass_app)
 
 ---
