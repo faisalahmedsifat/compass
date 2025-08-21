@@ -1,0 +1,38 @@
+# Compass Configuration File
+# Copy this to ~/.config/compass/config.yaml and customize as needed
+
+tracking:
+  interval: 10s                    # How often to capture workspace state
+  capture_screenshots: true       # Take screenshots for visual record
+  track_all_windows: true         # Track all windows, not just active
+
+privacy:
+  exclude_apps:                   # Apps to never track
+    - "1Password"
+    - "Bitwarden" 
+    - "Banking"
+    - "Wallet"
+    - "Password"
+    - "Keychain Access"
+  exclude_titles:                 # Window titles to filter out
+    - "incognito"
+    - "private"
+    - "password"
+    - "secure"
+    - "login"
+  blur_sensitive: true           # Blur sensitive content in screenshots
+  auto_delete_after: 30          # Days after which to auto-delete data
+
+server:
+  port: "8080"                   # Web dashboard port
+  host: "localhost"              # Web dashboard host
+
+storage:
+  path: "~/.compass/compass.db"  # Database file location
+  max_size: "1GB"                # Maximum database size
+
+ai:                              # Optional AI features (future)
+  enabled: false
+  provider: "ollama"
+  model: "llama2"
+
