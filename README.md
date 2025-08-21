@@ -1,10 +1,63 @@
 # 🧭 Compass
 
-**A lightweight CLI tool that sees your complete workspace - every window, every app, every context.**
+> **A lightweight CLI tool that sees your complete workspace - every window, every app, every context.**
 
-Compass is a simple command-line application that runs quietly in your terminal, tracking your entire digital workspace - all 15 windows across VS Code, Chrome with 47 tabs, that Terminal running in the background, Spotify playing your focus playlist, and yes, that Discord you forgot was open. View your stats through a clean local web dashboard.
+Tracks your entire digital workspace in real-time: all 15 windows across VS Code, Chrome with 47 tabs, Terminal, Slack, Spotify, and everything else. Get insights through a beautiful local dashboard.
 
-## 🚀 Current Status: ✅ **FULLY IMPLEMENTED & WORKING!**
+---
+
+## 👋 **First time here?**
+
+<div align="center">
+
+| 🎯 **What you want** | ⚡ **Action** | ⏱️ **Time** |
+|---------------------|--------------|-------------|
+| **Just try it** | [⚡ Quick Start](#-quick-start-30-seconds) | 30 seconds |
+| **See it working** | [📊 Live Demo](#-live-demo-real-data) | 2 minutes |
+| **Help improve it** | [🐛 Report Bug](https://github.com/faisalahmedsifat/compass/issues/new?template=bug_report.md) or [💡 Request Feature](https://github.com/faisalahmedsifat/compass/issues/new?template=feature_request.md) | 5 minutes |
+| **Build features** | [👨‍💻 Contributing Guide](CONTRIBUTING.md) | 10 minutes |
+
+</div>
+
+---
+
+## 🚀 **Quick Navigation**
+
+| 🎯 **I want to...** | 📍 **Go here** |
+|---------------------|----------------|
+| **Try Compass now** | [⚡ Quick Start](#-quick-start-30-seconds) |
+| **See what it does** | [📊 Live Demo](#-live-demo-real-data) |
+| **Contribute code** | [👨‍💻 Contributing](CONTRIBUTING.md) |
+| **Report a bug** | [🐛 Bug Report](https://github.com/faisalahmedsifat/compass/issues/new?template=bug_report.md) |
+| **Request feature** | [💡 Feature Request](https://github.com/faisalahmedsifat/compass/issues/new?template=feature_request.md) |
+| **Read architecture** | [🏗️ System Design](system.md) |
+
+---
+
+## ⚡ **Quick Start (30 seconds)**
+
+```bash
+# 1. Clone and build
+git clone https://github.com/faisalahmedsifat/compass.git
+cd compass && make build
+
+# 2. Start tracking  
+./compass start
+
+# 3. View your workspace
+open http://localhost:8080
+```
+
+**That's it!** Compass is now tracking every window on your Mac.
+
+### 🔗 **Need Help?**
+- 🐛 **Found a bug?** → [Report it here](https://github.com/faisalahmedsifat/compass/issues/new?template=bug_report.md)
+- 💡 **Have an idea?** → [Request feature here](https://github.com/faisalahmedsifat/compass/issues/new?template=feature_request.md)  
+- 👨‍💻 **Want to contribute?** → [Read the guide](CONTRIBUTING.md)
+
+---
+
+## 🚀 **Status: ✅ FULLY WORKING**
 
 - ✅ **Lightweight CLI tool** (single binary - 18MB)
 - ✅ **Complete window tracking** (active + all background windows)
@@ -52,14 +105,48 @@ Compass is a simple command-line application that runs quietly in your terminal,
 ```
 
 
-**🎯 Ready for daily use! 54+ minutes of workspace data already captured.**
+---
 
-### 🚀 **Want to Try It Right Now?**
-```bash
-git clone https://github.com/faisalahmedsifat/compass.git
-cd compass && make build && ./compass start
-# Dashboard: http://localhost:8080
+## 📊 **Live Demo (Real Data)**
+
+**🎯 Compass is capturing this RIGHT NOW:**
+
 ```
+📊 WORKSPACE STATE:
+🎯 Active: Cursor → README.md — compass  
+📁 Category: Development
+⏱️ Focus Time: 1m 50s
+🔄 Context Switches: 11
+🪟 Total Windows: 7
+
+📋 ALL WINDOWS:
+  [●] Cursor          📄 README.md — compass
+  [○] Google Chrome   📄 🧭 Compass - Workspace Tracker  
+  [○] Slack           📄 Lotus (DM) - Scaledx - Slack
+  [○] Terminal        📄 hello — faisalahmed@Kazis-Mac-mini...
+  [○] Preview         📄 mermaid-diagram-2025-07-14-184153.png
+  [○] System Settings 📄 Screen & System Audio Recording
+```
+
+**Stats after 1+ hours of testing:**
+- ✅ **101+ activities** captured automatically
+- ✅ **Real window titles** tracked (not just app names)
+- ✅ **Smart categorization** (Development, Communication)
+- ✅ **Privacy filtering** working
+- ✅ **Real-time dashboard** updates
+
+---
+
+## 📚 **Table of Contents**
+
+- [⚡ Quick Start](#-quick-start-30-seconds) - Get running in 30 seconds
+- [📊 Live Demo](#-live-demo-real-data) - See real workspace data
+- [🛠 Installation](#-installation--quick-start) - Multiple install methods
+- [👨‍💻 Contributing](#-want-to-contribute) - How to get involved
+- [❓ FAQ](#-faq) - Common questions
+- [🗺 Roadmap](#-updated-roadmap) - Future plans
+
+---
 
 ## 🎯 The Problem
 
@@ -89,6 +176,9 @@ Context: Full-stack development with active debugging
 
 ### Complete Workspace Intelligence
 Compass captures **EVERYTHING** running on your computer:
+
+<details>
+<summary><strong>📋 Click to see detailed workspace data structure</strong></summary>
 
 ```json
 {
@@ -148,6 +238,8 @@ Compass captures **EVERYTHING** running on your computer:
   }
 }
 ```
+
+</details>
 
 ### Smart Categorization (No AI Required)
 
@@ -386,7 +478,8 @@ Background Apps Always Running:
 - Slack: 8h (checked 23 times)
 ```
 
-## ⚙️ Configuration
+<details>
+<summary><strong>⚙️ Configuration Options</strong></summary>
 
 ```yaml
 # config.yaml
@@ -413,6 +506,8 @@ storage:
   retention_days: 30        # Auto-delete old data
   database: "sqlite"        # Simple, fast, local
 ```
+
+</details>
 
 ## 🔒 Privacy & Security
 
@@ -559,7 +654,9 @@ Recent Windows:
   Cursor               server.go — compass
 ```
 
-### **Real-Time API Response:**
+<details>
+<summary><strong>📡 Click to see Real-Time API Response</strong></summary>
+
 ```json
 {
   "active_window": {
@@ -591,12 +688,43 @@ Recent Windows:
 }
 ```
 
+</details>
+
 ### **🎯 What This Shows:**
 - **Complete context**: IDE + browser + communication tools
 - **Real window titles**: Actual file names, URLs, and content
 - **Smart categorization**: "Development" detected from Cursor + Chrome combo  
 - **Privacy respected**: No sensitive data exposed
 - **Live tracking**: Updates every 10 seconds
+
+---
+
+## 👨‍💻 **Want to Contribute?**
+
+<div align="center">
+
+### 🌟 **Compass needs YOU!**
+
+We're looking for contributors to help build the ultimate workspace intelligence tool.
+
+| 🎯 **Skill Level** | 🔧 **Areas** | 🚀 **Impact** |
+|-------------------|--------------|---------------|
+| **🟢 Beginner** | Documentation, Testing, Bug Reports | High - Help users succeed |
+| **🟡 Intermediate** | Dashboard UI, Categorization Rules | High - Improve user experience |  
+| **🔴 Advanced** | Linux/Windows Support, AI Features | Very High - Expand platform reach |
+
+### 📋 **Quick Contribution Paths:**
+
+1. **🐛 Found a bug?** → [Report it](https://github.com/faisalahmedsifat/compass/issues/new?template=bug_report.md) (5 minutes)
+2. **💡 Have an idea?** → [Request feature](https://github.com/faisalahmedsifat/compass/issues/new?template=feature_request.md) (5 minutes)
+3. **👨‍💻 Want to code?** → [Read CONTRIBUTING.md](CONTRIBUTING.md) (10 minutes)
+4. **🧪 Help test?** → Try on your platform and report results (15 minutes)
+
+**[📖 Full Contributing Guide](CONTRIBUTING.md)** | **[🏗️ System Architecture](system.md)**
+
+</div>
+
+---
 
 ## ❓ FAQ
 
@@ -770,6 +898,59 @@ MIT License - see [LICENSE](LICENSE) file
 
 *Not a desktop app. Just a lightweight CLI + local dashboard.*
 
-**⭐ WORKING NOW:** 54+ minutes tracked • 7 windows • Real-time categorization • Complete privacy
+---
 
-[Quick Start](#-installation--quick-start) | [Contributing](#-contributing) | [Report Issues](https://github.com/faisalahmedsifat/compass/issues) | [System Design](system.md)
+## 🤝 **Get Involved**
+
+<div align="center">
+
+| 🎯 **Action** | 🔗 **Link** | 📝 **Description** |
+|---------------|-------------|-------------------|
+| **🐛 Report Bug** | [Create Issue](https://github.com/faisalahmedsifat/compass/issues/new?template=bug_report.md) | Found something broken? Let us know! |
+| **💡 Request Feature** | [Create Issue](https://github.com/faisalahmedsifat/compass/issues/new?template=feature_request.md) | Have an idea? We'd love to hear it! |
+| **👨‍💻 Contribute Code** | [Contributing Guide](CONTRIBUTING.md) | Help build the future of workspace tracking |
+| **📖 Read Architecture** | [System Design](system.md) | Understand how Compass works |
+| **💬 Discuss Ideas** | [GitHub Discussions](https://github.com/faisalahmedsifat/compass/discussions) | Community chat and Q&A |
+
+**⭐ Star this repo** if Compass is useful to you!
+
+</div>
+
+---
+
+## 📈 **Project Stats**
+
+![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Platform](https://img.shields.io/badge/Platform-macOS-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Go Version](https://img.shields.io/badge/Go-1.21+-blue)
+
+**Currently tracking:** 54+ minutes • 7 windows • 11 context switches • Real-time categorization
+
+---
+
+## 🎯 **Ready to Get Started?**
+
+<div align="center">
+
+### Choose Your Path:
+
+**🚀 [Try Compass Now](⚡-quick-start-30-seconds)** • **🐛 [Report a Bug](https://github.com/faisalahmedsifat/compass/issues/new?template=bug_report.md)** • **💡 [Request Feature](https://github.com/faisalahmedsifat/compass/issues/new?template=feature_request.md)** • **👨‍💻 [Contribute](CONTRIBUTING.md)**
+
+---
+
+### 🌟 **Love Compass? Help us grow!**
+
+- ⭐ **Star this repository** if you find it useful
+- 🔄 **Share with colleagues** who track productivity  
+- 🐛 **Report issues** you encounter
+- 💡 **Suggest features** you'd like to see
+- 👨‍💻 **Contribute code** for Linux/Windows support
+
+---
+
+*Built with ❤️ for developers who want to understand their digital workspace*
+
+**🧭 Compass: Simple CLI • Complete Intelligence • Total Privacy**
+
+</div>
