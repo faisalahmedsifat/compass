@@ -360,12 +360,12 @@ storage:
 ## 🗺 Roadmap
 
 ### ✅ Week 1: Core MVP (Ready Now!)
-- [x] Track all windows (active + background)
-- [x] Capture window relationships
-- [x] Smart categorization via rules
-- [x] Real-time dashboard
-- [x] SQLite local storage
-- [x] Privacy controls
+- [ ] Track all windows (active + background)
+- [ ] Capture window relationships
+- [ ] Smart categorization via rules
+- [ ] Real-time dashboard
+- [ ] SQLite local storage
+- [ ] Privacy controls
 
 ### 📋 Week 2: Enhanced Tracking
 - [ ] Browser tab extraction (via extension)
