@@ -149,6 +149,7 @@ type WindowManager interface {
 	GetActiveWindow() (*Window, error)
 	GetAllWindows() ([]*Window, error)
 	TakeScreenshot() ([]byte, error)
+	GetFocusDuration() time.Duration
 }
 
 // Rule for categorization

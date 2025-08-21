@@ -36,8 +36,8 @@ type Categorizer interface {
 func NewCaptureEngine(config *types.Config, storage Storage, categorizer Categorizer, activityChan chan *types.Activity) *CaptureEngine {
 	var windowMgr types.WindowManager
 	
-	// Use macOS implementation for now
-	windowMgr = NewDarwinWindowManager()
+	// Use platform-specific implementation
+	windowMgr = newPlatformWindowManager()
 	
 	return &CaptureEngine{
 		windowMgr:     windowMgr,
@@ -162,9 +162,7 @@ func (c *CaptureEngine) captureWorkspaceSnapshot() (*types.WorkspaceSnapshot, er
 func (c *CaptureEngine) snapshotToActivity(snapshot *types.WorkspaceSnapshot) *types.Activity {
 	// Calculate focus duration if we have an active window
 	var focusDuration int
-	if darwinMgr, ok := c.windowMgr.(*DarwinWindowManager); ok {
-		focusDuration = int(darwinMgr.GetFocusDuration().Seconds())
-	}
+	focusDuration = int(c.windowMgr.GetFocusDuration().Seconds())
 
 	return &types.Activity{
 		Timestamp:     snapshot.Timestamp,

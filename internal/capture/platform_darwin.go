@@ -231,3 +231,8 @@ func (m *DarwinWindowManager) GetFocusDuration() time.Duration {
 	}
 	return time.Since(m.focusStartTime)
 }
+
+// newPlatformWindowManager creates a platform-specific window manager (macOS)
+func newPlatformWindowManager() types.WindowManager {
+	return NewDarwinWindowManager()
+}
