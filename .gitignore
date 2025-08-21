@@ -1,0 +1,99 @@
+# Compass Git Ignore
+
+# Binaries
+compass
+compass-*
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build artifacts
+dist/
+build/
+
+# Go build artifacts
+*.test
+*.prof
+*.out
+
+# Dependency directories
+vendor/
+
+# Go modules cache
+go.work
+go.work.sum
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Compass data files (user data should not be committed)
+*.db
+*.sqlite
+*.sqlite3
+compass.db
+.compass/
+
+# Configuration files with secrets
+config.yaml
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Screenshots (privacy)
+screenshots/
+*.png
+*.jpg
+*.jpeg
+
+# Test coverage
+coverage.txt
+coverage.html
+*.cover
+
+# Documentation build artifacts
+docs/_build/
+site/
+
+# Node.js (for future frontend development)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (for future AI features)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Editor backups
+*~
+*.bak
+*.backup

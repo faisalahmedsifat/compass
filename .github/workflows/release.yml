@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Get version
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Build binaries
+      run: |
+        mkdir -p dist
+        
+        # Build for different platforms
+        GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/compass-${{ steps.version.outputs.VERSION }}-darwin-amd64 cmd/compass/main.go
+        GOOS=darwin GOARCH=arm64 go build -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/compass-${{ steps.version.outputs.VERSION }}-darwin-arm64 cmd/compass/main.go
+        GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/compass-${{ steps.version.outputs.VERSION }}-linux-amd64 cmd/compass/main.go
+        GOOS=windows GOARCH=amd64 go build -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/compass-${{ steps.version.outputs.VERSION }}-windows-amd64.exe cmd/compass/main.go
+        
+        # Create checksums
+        cd dist
+        sha256sum * > checksums.txt
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/*
+        body: |
+          ## 🧭 Compass ${{ steps.version.outputs.VERSION }}
+          
+          A lightweight CLI tool that tracks your complete digital workspace.
+          
+          ### 📦 Downloads
+          
+          - **macOS (Apple Silicon)**: `compass-${{ steps.version.outputs.VERSION }}-darwin-arm64`
+          - **macOS (Intel)**: `compass-${{ steps.version.outputs.VERSION }}-darwin-amd64`  
+          - **Linux**: `compass-${{ steps.version.outputs.VERSION }}-linux-amd64`
+          - **Windows**: `compass-${{ steps.version.outputs.VERSION }}-windows-amd64.exe`
+          
+          ### 🚀 Quick Start
+          
+          ```bash
+          # Download for your platform
+          chmod +x compass-*
+          ./compass-* start
+          
+          # Open dashboard
+          open http://localhost:8080
+          ```
+          
+          ### 📊 Features
+          
+          - Complete window tracking (active + background)
+          - Real-time categorization
+          - Local web dashboard
+          - Privacy controls
+          - SQLite storage
+          - WebSocket updates
+          
+          See [README.md](https://github.com/faisalahmedsifat/compass#readme) for full documentation.
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
