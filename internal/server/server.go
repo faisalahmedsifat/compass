@@ -15,14 +15,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Server provides the web interface for Compass
+// Server provides the REST API interface for Compass
 type Server struct {
 	db       Database
 	addr     string
 	upgrader websocket.Upgrader
 	clients  map[*websocket.Conn]bool
 	clientMu sync.RWMutex
-	
+
 	activityChan chan *types.Activity
 	server       *http.Server
 }
@@ -33,12 +33,13 @@ type Database interface {
 	GetCurrentWorkspace() (*types.CurrentWorkspace, error)
 	GetStats(period string, date time.Time) (*types.Stats, error)
 	GetDatabaseStats() (map[string]interface{}, error)
+	GetScreenshot(activityID int64) ([]byte, error)
 }
 
 // NewServer creates a new web server
 func NewServer(config *types.ServerConfig, db Database, activityChan chan *types.Activity) *Server {
 	addr := fmt.Sprintf("%s:%s", config.Host, config.Port)
-	
+
 	return &Server{
 		db:           db,
 		addr:         addr,
@@ -57,18 +58,19 @@ func NewServer(config *types.ServerConfig, db Database, activityChan chan *types
 func (s *Server) Start(ctx context.Context) error {
 	mux := http.NewServeMux()
 
-	// API endpoints
-	mux.HandleFunc("/api/activities", s.handleActivities)
-	mux.HandleFunc("/api/stats", s.handleStats)
-	mux.HandleFunc("/api/current", s.handleCurrent)
-	mux.HandleFunc("/api/export", s.handleExport)
-	mux.HandleFunc("/api/health", s.handleHealth)
+	// API endpoints with CORS wrapper
+	mux.HandleFunc("/api/activities", s.withCORS(s.handleActivities))
+	mux.HandleFunc("/api/stats", s.withCORS(s.handleStats))
+	mux.HandleFunc("/api/current", s.withCORS(s.handleCurrent))
+	mux.HandleFunc("/api/export", s.withCORS(s.handleExport))
+	mux.HandleFunc("/api/health", s.withCORS(s.handleHealth))
+	mux.HandleFunc("/api/screenshot/", s.withCORS(s.handleScreenshot))
 
 	// WebSocket for real-time updates
 	mux.HandleFunc("/ws", s.handleWebSocket)
 
-	// Static files
-	mux.HandleFunc("/", s.handleDashboard)
+	// CORS preflight handler and API info
+	mux.HandleFunc("/", s.handleCORS)
 
 	s.server = &http.Server{
 		Addr:    s.addr,
@@ -78,8 +80,16 @@ func (s *Server) Start(ctx context.Context) error {
 	// Start WebSocket broadcaster
 	go s.startBroadcaster(ctx)
 
-	log.Printf("Dashboard available at http://%s", s.addr)
-	
+	log.Printf("Compass API server running on http://%s", s.addr)
+	log.Printf("Available endpoints:")
+	log.Printf("  GET  /api/health       - Server health check")
+	log.Printf("  GET  /api/current      - Current workspace state")
+	log.Printf("  GET  /api/activities   - Activity history")
+	log.Printf("  GET  /api/stats        - Workspace statistics")
+	log.Printf("  GET  /api/export       - Export data")
+	log.Printf("  GET  /api/screenshot/* - Activity screenshots")
+	log.Printf("  WS   /ws               - Real-time updates")
+
 	// Start server in goroutine
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -89,11 +99,11 @@ func (s *Server) Start(ctx context.Context) error {
 
 	// Wait for context cancellation
 	<-ctx.Done()
-	
+
 	// Graceful shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	return s.server.Shutdown(shutdownCtx)
 }
 
@@ -114,7 +124,7 @@ func (s *Server) handleActivities(w http.ResponseWriter, r *http.Request) {
 
 	// Parse query parameters
 	query := r.URL.Query()
-	
+
 	// Default to last 24 hours
 	to := time.Now()
 	from := to.Add(-24 * time.Hour)
@@ -148,7 +158,7 @@ func (s *Server) handleActivities(w http.ResponseWriter, r *http.Request) {
 	// Return JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	
+
 	if err := json.NewEncoder(w).Encode(activities); err != nil {
 		log.Printf("Failed to encode activities: %v", err)
 	}
@@ -181,8 +191,7 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	
+
 	if err := json.NewEncoder(w).Encode(stats); err != nil {
 		log.Printf("Failed to encode stats: %v", err)
 	}
@@ -202,8 +211,7 @@ func (s *Server) handleCurrent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	
+
 	if err := json.NewEncoder(w).Encode(current); err != nil {
 		log.Printf("Failed to encode current workspace: %v", err)
 	}
@@ -248,7 +256,6 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	// Set appropriate headers
 	filename := fmt.Sprintf("compass-export-%s.%s", from.Format("2006-01-02"), format)
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	switch format {
 	case "json":
@@ -278,6 +285,44 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(health)
+}
+
+// handleScreenshot handles GET /api/screenshot/{id}
+func (s *Server) handleScreenshot(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract activity ID from URL path
+	path := strings.TrimPrefix(r.URL.Path, "/api/screenshot/")
+	activityID, err := strconv.ParseInt(path, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid activity ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get screenshot from database
+	screenshot, err := s.db.GetScreenshot(activityID)
+	if err != nil {
+		if strings.Contains(err.Error(), "no screenshot found") {
+			http.Error(w, "Screenshot not found", http.StatusNotFound)
+		} else {
+			http.Error(w, fmt.Sprintf("Failed to get screenshot: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Set appropriate headers
+	w.Header().Set("Content-Type", "image/png") // Assuming PNG format
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", len(screenshot)))
+	w.Header().Set("Cache-Control", "public, max-age=3600") // Cache for 1 hour
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	// Write screenshot data
+	if _, err := w.Write(screenshot); err != nil {
+		log.Printf("Failed to write screenshot: %v", err)
+	}
 }
 
 // handleWebSocket handles WebSocket connections
@@ -383,15 +428,62 @@ func csvEscape(value string) string {
 	return value
 }
 
-// handleDashboard serves the main dashboard HTML
-func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
+// withCORS wraps HTTP handlers with CORS headers
+func (s *Server) withCORS(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// Handle preflight requests
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Call the actual handler
+		handler(w, r)
+	}
+}
+
+// handleCORS handles CORS preflight requests and serves API info
+func (s *Server) handleCORS(w http.ResponseWriter, r *http.Request) {
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
 
-	// For MVP, serve a simple embedded HTML dashboard
-	html := getDashboardHTML()
-	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(html))
+	// Serve API information
+	info := map[string]interface{}{
+		"name":        "Compass API",
+		"version":     "1.0.0",
+		"description": "Workspace tracking and analytics API",
+		"endpoints": map[string]string{
+			"/api/health":       "Server health check",
+			"/api/current":      "Current workspace state",
+			"/api/activities":   "Activity history with optional filters",
+			"/api/stats":        "Workspace statistics",
+			"/api/export":       "Export data in JSON/CSV format",
+			"/api/screenshot/*": "Activity screenshots",
+			"/ws":               "WebSocket for real-time updates",
+		},
+		"websocket": map[string]string{
+			"url":      "ws://" + r.Host + "/ws",
+			"messages": "Receives current_workspace and activity_update events",
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
 }

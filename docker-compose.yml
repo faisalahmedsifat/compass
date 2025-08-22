@@ -1,0 +1,85 @@
+# 🧭 Compass Docker Compose Configuration
+# This file provides a containerized development environment
+
+version: '3.8'
+
+services:
+  # Backend service (Go API server)
+  compass-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: compass-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - compass-data:/app/data
+    environment:
+      - COMPASS_ENV=development
+      - COMPASS_PORT=8080
+      - COMPASS_DB_PATH=/app/data/compass.db
+    restart: unless-stopped
+    networks:
+      - compass-network
+    depends_on:
+      - compass-db
+
+  # Frontend service (React development server)
+  compass-frontend:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile.frontend
+    container_name: compass-frontend
+    ports:
+      - "5174:5174"
+    volumes:
+      - ./dashboard:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8080
+    restart: unless-stopped
+    networks:
+      - compass-network
+    depends_on:
+      - compass-backend
+
+  # Database service (SQLite in volume)
+  compass-db:
+    image: alpine:latest
+    container_name: compass-db
+    volumes:
+      - compass-data:/data
+    command: tail -f /dev/null  # Keep container running
+    networks:
+      - compass-network
+
+  # Development tools container
+  compass-dev-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev-tools
+    container_name: compass-dev-tools
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: tail -f /dev/null  # Keep container running for exec commands
+    networks:
+      - compass-network
+    profiles:
+      - dev-tools
+
+# Networks
+networks:
+  compass-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  compass-data:
+    driver: local
+
+# Override for production
+# Create docker-compose.prod.yml for production overrides
+

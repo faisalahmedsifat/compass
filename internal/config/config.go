@@ -13,11 +13,11 @@ import (
 
 // Default configuration values
 const (
-	DefaultInterval           = 10 * time.Second
-	DefaultPort              = "8080"
-	DefaultHost              = "localhost"
-	DefaultAutoDeleteDays    = 30
-	DefaultMaxSize           = "1GB"
+	DefaultInterval       = 10 * time.Second
+	DefaultPort           = "8080"
+	DefaultHost           = "localhost"
+	DefaultAutoDeleteDays = 30
+	DefaultMaxSize        = "1GB"
 )
 
 // Load loads configuration from file, environment, and defaults
@@ -66,7 +66,7 @@ func DefaultConfig() *types.Config {
 		Privacy: &types.PrivacyConfig{
 			ExcludeApps: []string{
 				"1Password",
-				"Bitwarden", 
+				"Bitwarden",
 				"Banking",
 				"Wallet",
 				"Password",
@@ -99,23 +99,23 @@ func DefaultConfig() *types.Config {
 // Save saves the configuration to file
 func Save(config *types.Config) error {
 	configPath := filepath.Join(getConfigDir(), "config.yaml")
-	
+
 	// Ensure config directory exists
 	if err := os.MkdirAll(getConfigDir(), 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
-	
+
 	// Marshal to YAML
 	data, err := yaml.Marshal(config)
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
-	
+
 	// Write to file
 	if err := os.WriteFile(configPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -124,19 +124,19 @@ func ValidateConfig(config *types.Config) error {
 	if config.Tracking.Interval < time.Second {
 		return fmt.Errorf("tracking interval must be at least 1 second")
 	}
-	
+
 	if config.Privacy.AutoDeleteDays < 1 {
 		return fmt.Errorf("auto delete days must be at least 1")
 	}
-	
+
 	if config.Server.Port == "" {
 		return fmt.Errorf("server port cannot be empty")
 	}
-	
+
 	if config.Storage.Path == "" {
 		return fmt.Errorf("storage path cannot be empty")
 	}
-	
+
 	return nil
 }
 
@@ -173,14 +173,13 @@ func GetConfigPath() string {
 // CreateDefaultConfigFile creates a default config file if it doesn't exist
 func CreateDefaultConfigFile() error {
 	configPath := GetConfigPath()
-	
+
 	// Check if config file already exists
 	if _, err := os.Stat(configPath); err == nil {
 		return nil // File already exists
 	}
-	
+
 	// Create default config
 	config := DefaultConfig()
 	return Save(config)
 }
-

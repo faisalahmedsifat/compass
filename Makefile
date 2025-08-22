@@ -3,7 +3,7 @@ VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "0.1
 LDFLAGS := -X main.Version=$(VERSION)
 BINARY_NAME := compass
 
-.PHONY: build clean install test run help
+.PHONY: build clean install test run help dev-setup dev-start dev-test lint
 
 # Default target
 all: build
@@ -75,20 +75,93 @@ status:
 dashboard:
 	./$(BINARY_NAME) dashboard
 
+# Development targets
+
+# Complete development setup for new contributors
+dev-setup:
+	@echo "🧭 Running comprehensive development setup..."
+	./dev-setup.sh
+
+# Start both backend and frontend for development
+dev-start: build
+	@echo "🚀 Starting development environment..."
+	@echo "Backend will start on :8080, Frontend on :5174"
+	./dev-start.sh
+
+# Run comprehensive test suite
+dev-test:
+	@echo "🧪 Running full test suite..."
+	./dev-test.sh
+
+# Lint backend code
+lint:
+	@echo "🔍 Linting Go code..."
+	golangci-lint run
+	@echo "✅ Linting completed"
+
+# Format Go code
+fmt:
+	@echo "🎨 Formatting Go code..."
+	go fmt ./...
+	goimports -w .
+	@echo "✅ Code formatted"
+
+# Build production-ready frontend
+build-frontend:
+	@echo "📦 Building frontend for production..."
+	cd dashboard && npm run build
+	@echo "✅ Frontend built: dashboard/dist/"
+
+# Install development tools
+dev-tools:
+	@echo "🛠️  Installing development tools..."
+	go install golang.org/x/tools/cmd/goimports@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@echo "✅ Development tools installed"
+
+# Quick health check for development environment
+dev-check:
+	@echo "🩺 Development environment health check..."
+	@echo "Checking Go installation..."
+	@go version || (echo "❌ Go not found" && exit 1)
+	@echo "Checking Node.js installation..."
+	@node --version || (echo "❌ Node.js not found" && exit 1)
+	@echo "Checking if backend builds..."
+	@go build -o /tmp/compass-test cmd/compass/main.go && rm -f /tmp/compass-test || (echo "❌ Backend build failed" && exit 1)
+	@echo "Checking if frontend dependencies are installed..."
+	@cd dashboard && npm list >/dev/null 2>&1 || (echo "❌ Frontend dependencies missing, run 'cd dashboard && npm install'" && exit 1)
+	@echo "✅ Development environment is healthy!"
+
 # Show help
 help:
-	@echo "Compass Build System"
+	@echo "🧭 Compass Build System"
 	@echo ""
-	@echo "Available targets:"
-	@echo "  build      - Build the Compass binary"
-	@echo "  build-all  - Build for all platforms"
-	@echo "  install    - Install to /usr/local/bin"
-	@echo "  clean      - Remove build artifacts"
-	@echo "  test       - Run tests"
-	@echo "  deps       - Update dependencies"
-	@echo "  run        - Build and run Compass"
-	@echo "  daemon     - Build and run in daemon mode"
-	@echo "  stop       - Stop Compass"
-	@echo "  status     - Show system status"
-	@echo "  dashboard  - Open dashboard in browser"
-	@echo "  help       - Show this help"
+	@echo "📦 Build Targets:"
+	@echo "  build         - Build the Compass binary"
+	@echo "  build-all     - Build for all platforms"
+	@echo "  build-frontend- Build frontend for production"
+	@echo "  clean         - Remove build artifacts"
+	@echo ""
+	@echo "🛠️  Development Targets:"
+	@echo "  dev-setup     - Complete setup for new contributors"
+	@echo "  dev-start     - Start both backend and frontend"
+	@echo "  dev-test      - Run comprehensive test suite"
+	@echo "  dev-check     - Health check for dev environment"
+	@echo "  dev-tools     - Install development tools"
+	@echo ""
+	@echo "🔍 Code Quality:"
+	@echo "  test          - Run backend tests"
+	@echo "  lint          - Lint Go code"
+	@echo "  fmt           - Format Go code"
+	@echo ""
+	@echo "🚀 Runtime Targets:"
+	@echo "  run           - Build and run Compass"
+	@echo "  daemon        - Build and run in daemon mode"
+	@echo "  stop          - Stop Compass"
+	@echo "  status        - Show system status"
+	@echo "  dashboard     - Open dashboard in browser"
+	@echo ""
+	@echo "📚 Other:"
+	@echo "  deps          - Update dependencies"
+	@echo "  install       - Install to /usr/local/bin"
+	@echo "  help          - Show this help"

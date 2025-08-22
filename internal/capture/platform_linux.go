@@ -18,7 +18,7 @@ type LinuxWindowManager struct {
 	lastActiveWindow *types.Window
 	focusStartTime   time.Time
 	// Track focus sessions to prevent runaway time accumulation
-	focusSessions    map[string]time.Time // key: "appname:title:pid"
+	focusSessions map[string]time.Time // key: "appname:title:pid"
 }
 
 // NewLinuxWindowManager creates a new Linux window manager
@@ -57,23 +57,23 @@ func (m *LinuxWindowManager) GetActiveWindow() (*types.Window, error) {
 
 	// Track focus time for active window with improved session management
 	windowKey := fmt.Sprintf("%s:%s:%d", window.AppName, window.Title, window.ProcessID)
-	
-	if m.lastActiveWindow != nil && 
-	   m.lastActiveWindow.AppName == window.AppName && 
-	   m.lastActiveWindow.Title == window.Title &&
-	   m.lastActiveWindow.ProcessID == window.ProcessID {
+
+	if m.lastActiveWindow != nil &&
+		m.lastActiveWindow.AppName == window.AppName &&
+		m.lastActiveWindow.Title == window.Title &&
+		m.lastActiveWindow.ProcessID == window.ProcessID {
 		// Same window still active - no need to reset timer
 	} else {
 		// New active window - reset the focus timer
 		m.lastActiveWindow = window
 		m.focusStartTime = time.Now()
-		
+
 		// Clean up old focus sessions (keep only last 10 to prevent memory leaks)
 		if len(m.focusSessions) > 10 {
 			// Keep only the most recent sessions
 			m.focusSessions = make(map[string]time.Time)
 		}
-		
+
 		// Record this session start time
 		m.focusSessions[windowKey] = time.Now()
 	}
@@ -138,10 +138,10 @@ func (m *LinuxWindowManager) GetAllWindows() ([]*types.Window, error) {
 		}
 
 		// Mark active window
-		if activeWindow != nil && 
-		   window.AppName == activeWindow.AppName && 
-		   window.Title == activeWindow.Title &&
-		   window.ProcessID == activeWindow.ProcessID {
+		if activeWindow != nil &&
+			window.AppName == activeWindow.AppName &&
+			window.Title == activeWindow.Title &&
+			window.ProcessID == activeWindow.ProcessID {
 			window.IsActive = true
 			window.LastActive = time.Now()
 		}
@@ -155,7 +155,7 @@ func (m *LinuxWindowManager) GetAllWindows() ([]*types.Window, error) {
 // TakeScreenshot captures a screenshot using ImageMagick import
 func (m *LinuxWindowManager) TakeScreenshot() ([]byte, error) {
 	tmpFile := "/tmp/compass_screenshot.png"
-	
+
 	// Use ImageMagick import command (available on the system)
 	cmd := exec.Command("import", "-window", "root", tmpFile)
 	err := cmd.Run()
@@ -186,7 +186,7 @@ func (m *LinuxWindowManager) getWindowInfo(windowID string, isActive bool) (*typ
 
 	properties := make(map[string]string)
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	
+
 	for _, line := range lines {
 		if strings.Contains(line, " = ") {
 			parts := strings.SplitN(line, " = ", 2)
@@ -302,10 +302,10 @@ func (m *LinuxWindowManager) GetFocusDuration() time.Duration {
 	if m.lastActiveWindow == nil {
 		return 0
 	}
-	
+
 	// Calculate duration for current focus session
 	duration := time.Since(m.focusStartTime)
-	
+
 	// Cap focus duration to prevent unrealistic values
 	// Maximum of 6 hours per session (reasonable for deep work)
 	maxDuration := 6 * time.Hour
@@ -314,14 +314,14 @@ func (m *LinuxWindowManager) GetFocusDuration() time.Duration {
 		m.focusStartTime = time.Now()
 		return maxDuration
 	}
-	
+
 	// Additional safeguard: if duration is unreasonably long (>12 hours),
 	// this indicates a bug or system sleep/resume, so reset
 	if duration > 12*time.Hour {
 		m.focusStartTime = time.Now()
 		return 0
 	}
-	
+
 	return duration
 }
 

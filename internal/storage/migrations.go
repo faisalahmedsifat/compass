@@ -154,7 +154,7 @@ func (d *Database) GetDatabaseStats() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if firstActivity.Valid {
 		stats["first_activity"] = firstActivity.String
 	}
@@ -178,4 +178,3 @@ func (d *Database) GetDatabaseStats() (map[string]interface{}, error) {
 
 	return stats, nil
 }
-

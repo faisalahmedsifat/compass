@@ -169,7 +169,7 @@ func runTracker() error {
 
 	// Create and start web server
 	webServer := server.NewServer(cfg.Server, db, activityChan)
-	
+
 	// Create capture engine
 	captureEngine := capture.NewCaptureEngine(cfg, db, categorizer, activityChan)
 
@@ -199,7 +199,7 @@ func runTracker() error {
 	fmt.Printf("[%s] Started tracking\n", time.Now().Format("2006-01-02 15:04:05"))
 	fmt.Printf("[%s] Dashboard: http://%s:%s\n", time.Now().Format("2006-01-02 15:04:05"), cfg.Server.Host, cfg.Server.Port)
 	fmt.Printf("[%s] Capturing every %v\n", time.Now().Format("2006-01-02 15:04:05"), cfg.Tracking.Interval)
-	
+
 	if daemon {
 		fmt.Println("Running in daemon mode. Use 'compass stop' to stop.")
 		// TODO: Implement proper daemon process management
@@ -210,7 +210,7 @@ func runTracker() error {
 	// Wait for shutdown signal
 	<-sigChan
 	fmt.Println("\n🧭 Shutting down Compass...")
-	
+
 	// Graceful shutdown
 	cancel()
 	time.Sleep(500 * time.Millisecond) // Allow components to shut down
@@ -239,11 +239,11 @@ func showStats() error {
 
 	fmt.Printf("🧭 Compass Stats - %s\n", time.Now().Format("January 2, 2006"))
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	
+
 	fmt.Printf("Total Active Time: %s\n", formatDurationForDisplay(stats.TotalTime))
 	fmt.Printf("Context Switches: %d\n", stats.ContextSwitches)
 	fmt.Printf("Longest Focus: %s\n", formatDurationForDisplay(stats.LongestFocus))
-	
+
 	if len(stats.ByCategory) > 0 {
 		fmt.Println("\nTop Categories:")
 		for category, duration := range stats.ByCategory {
@@ -255,7 +255,9 @@ func showStats() error {
 		fmt.Println("\nTop Applications:")
 		count := 0
 		for app, duration := range stats.ByApp {
-			if count >= 5 { break }
+			if count >= 5 {
+				break
+			}
 			fmt.Printf("  %-20s %s\n", app, formatDurationForDisplay(duration))
 			count++
 		}
@@ -317,13 +319,13 @@ func showStatus() error {
 
 	fmt.Printf("🧭 Compass v%s Status\n", Version)
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	
+
 	fmt.Printf("Configuration: %s\n", config.GetConfigPath())
 	fmt.Printf("Database: %s\n", cfg.Storage.Path)
 	fmt.Printf("Dashboard: http://%s:%s\n", cfg.Server.Host, cfg.Server.Port)
 	fmt.Printf("Tracking interval: %v\n", cfg.Tracking.Interval)
 	fmt.Printf("Screenshots: %v\n", cfg.Tracking.CaptureScreenshots)
-	
+
 	// Check if database exists and get stats
 	if db, err := storage.NewDatabase(cfg.Storage.Path); err == nil {
 		defer db.Close()
@@ -345,7 +347,7 @@ func formatDurationForDisplay(d time.Duration) string {
 	if d == 0 {
 		return "0s"
 	}
-	
+
 	hours := int(d.Hours())
 	minutes := int(d.Minutes()) % 60
 	seconds := int(d.Seconds()) % 60
