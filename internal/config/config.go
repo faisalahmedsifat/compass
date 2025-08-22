@@ -14,12 +14,12 @@ import (
 
 // Default configuration values
 const (
-	DefaultInterval          = 10 * time.Second
-	DefaultScreenshotInterval = 60 * time.Second  // Screenshots every minute by default
-	DefaultPort              = "8080"
-	DefaultHost              = "localhost"
-	DefaultAutoDeleteDays    = 30
-	DefaultMaxSize           = "1GB"
+	DefaultInterval           = 10 * time.Second
+	DefaultScreenshotInterval = 60 * time.Second // Screenshots every minute by default
+	DefaultPort               = "8080"
+	DefaultHost               = "localhost"
+	DefaultAutoDeleteDays     = 30
+	DefaultMaxSize            = "1GB"
 )
 
 // Load loads configuration from file, environment, and defaults
@@ -51,7 +51,7 @@ func Load() (*types.Config, error) {
 	if err := viper.Unmarshal(config); err != nil {
 		return nil, fmt.Errorf("error unmarshaling config: %w", err)
 	}
-	
+
 	// Manually handle screenshot_interval since Viper's auto-unmarshaling isn't working for it
 	if screenshotIntervalStr := viper.GetString("tracking.screenshot_interval"); screenshotIntervalStr != "" {
 		if duration, err := time.ParseDuration(screenshotIntervalStr); err == nil {

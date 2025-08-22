@@ -13,15 +13,15 @@ import (
 
 // CaptureEngine orchestrates the data capture process
 type CaptureEngine struct {
-	windowMgr       types.WindowManager
-	storage         Storage
-	categorizer     Categorizer
-	privacyFilter   *PrivacyFilter
-	interval        time.Duration
-	config          *types.Config
-	activityChan    chan *types.Activity
-	lastCapture     time.Time
-	lastScreenshot  time.Time  // Track when we last took a screenshot
+	windowMgr      types.WindowManager
+	storage        Storage
+	categorizer    Categorizer
+	privacyFilter  *PrivacyFilter
+	interval       time.Duration
+	config         *types.Config
+	activityChan   chan *types.Activity
+	lastCapture    time.Time
+	lastScreenshot time.Time // Track when we last took a screenshot
 }
 
 // Storage interface for the capture engine
@@ -153,13 +153,13 @@ func (c *CaptureEngine) captureWorkspaceSnapshot() (*types.WorkspaceSnapshot, er
 	// 6. Take screenshot (optional) - based on screenshot interval
 	var screenshot []byte
 	now := time.Now()
-	shouldTakeScreenshot := c.config.Tracking.CaptureScreenshots && 
+	shouldTakeScreenshot := c.config.Tracking.CaptureScreenshots &&
 		(c.lastScreenshot.IsZero() || now.Sub(c.lastScreenshot) >= c.config.Tracking.ScreenshotInterval)
-	
+
 	if shouldTakeScreenshot {
 		if data, err := c.windowMgr.TakeScreenshot(); err == nil {
 			screenshot = c.privacyFilter.BlurSensitive(data)
-			c.lastScreenshot = now  // Update last screenshot time
+			c.lastScreenshot = now // Update last screenshot time
 		}
 	}
 
