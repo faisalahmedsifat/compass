@@ -13,14 +13,15 @@ import (
 
 // CaptureEngine orchestrates the data capture process
 type CaptureEngine struct {
-	windowMgr     types.WindowManager
-	storage       Storage
-	categorizer   Categorizer
-	privacyFilter *PrivacyFilter
-	interval      time.Duration
-	config        *types.Config
-	activityChan  chan *types.Activity
-	lastCapture   time.Time
+	windowMgr      types.WindowManager
+	storage        Storage
+	categorizer    Categorizer
+	privacyFilter  *PrivacyFilter
+	interval       time.Duration
+	config         *types.Config
+	activityChan   chan *types.Activity
+	lastCapture    time.Time
+	lastScreenshot time.Time // Track when we last took a screenshot
 }
 
 // Storage interface for the capture engine
@@ -54,9 +55,13 @@ func NewCaptureEngine(config *types.Config, storage Storage, categorizer Categor
 // Start begins the capture process
 func (c *CaptureEngine) Start(ctx context.Context) error {
 	log.Printf("Starting capture engine with %v interval", c.interval)
+	if c.config.Tracking.CaptureScreenshots {
+		log.Printf("Screenshots enabled with %v interval", c.config.Tracking.ScreenshotInterval)
+	}
 
-	// Initialize last capture time
+	// Initialize last capture and screenshot times
 	c.lastCapture = time.Time{}
+	c.lastScreenshot = time.Time{}
 
 	ticker := time.NewTicker(c.interval)
 	defer ticker.Stop()
@@ -145,11 +150,16 @@ func (c *CaptureEngine) captureWorkspaceSnapshot() (*types.WorkspaceSnapshot, er
 	// 5. Categorize activity
 	category, _ := c.categorizer.Categorize(windowValues)
 
-	// 6. Take screenshot (optional)
+	// 6. Take screenshot (optional) - based on screenshot interval
 	var screenshot []byte
-	if c.config.Tracking.CaptureScreenshots {
+	now := time.Now()
+	shouldTakeScreenshot := c.config.Tracking.CaptureScreenshots &&
+		(c.lastScreenshot.IsZero() || now.Sub(c.lastScreenshot) >= c.config.Tracking.ScreenshotInterval)
+
+	if shouldTakeScreenshot {
 		if data, err := c.windowMgr.TakeScreenshot(); err == nil {
 			screenshot = c.privacyFilter.BlurSensitive(data)
+			c.lastScreenshot = now // Update last screenshot time
 		}
 	}
 

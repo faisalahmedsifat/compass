@@ -365,10 +365,19 @@ Productivity ▲
 
 - [⚡ Quick Start](#-quick-start-30-seconds) - Get running in 30 seconds
 - [📊 Live Demo](#-live-demo-real-data) - See real workspace data
+- [⚙️ Configuration](#️-configuration) - Complete configuration guide
 - [🛠 Installation](#-installation--quick-start) - Multiple install methods
 - [👨‍💻 Contributing](#-want-to-contribute) - How to get involved
 - [❓ FAQ](#-faq) - Common questions
 - [🗺 Roadmap](#-updated-roadmap) - Future plans
+
+## 📖 **Documentation Quick Links**
+
+| 📄 **Document**                        | 📝 **Purpose**                                  | 🎯 **For**         |
+| -------------------------------------- | ----------------------------------------------- | ------------------ |
+| **[CONFIG.md](CONFIG.md)**             | Comprehensive configuration guide with examples | Users & Developers |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Development setup and contribution guidelines   | Developers         |
+| **[CHANGELOG.md](CHANGELOG.md)**       | Version history and feature updates             | Users & Developers |
 
 ---
 
@@ -762,36 +771,153 @@ Background Apps Always Running:
 - Slack: 8h (checked 23 times)
 ```
 
+## ⚙️ **Configuration**
+
+### **📁 Configuration File Location**
+
+**⚠️ IMPORTANT**: Compass loads configuration from the system config directory, **NOT** the project directory.
+
+```bash
+# ✅ CORRECT: Edit this file
+~/.config/compass/config.yaml
+
+# ❌ WRONG: Don't edit this (it's just an example)
+./config.yaml.example
+```
+
+### **🔧 How to Configure Compass**
+
+#### **Method 1: Direct Edit (Recommended)**
+
+```bash
+# Edit the system config file directly
+nano ~/.config/compass/config.yaml
+# OR
+code ~/.config/compass/config.yaml
+```
+
+#### **Method 2: Copy from Example**
+
+```bash
+# Copy example to system location and then edit
+cp config.yaml.example ~/.config/compass/config.yaml
+nano ~/.config/compass/config.yaml
+```
+
+#### **Method 3: Use Compass CLI**
+
+```bash
+# Create default config (if it doesn't exist)
+compass --help  # This will create default config
+# Then edit: ~/.config/compass/config.yaml
+```
+
+### **📋 Configuration Options**
+
 <details>
-<summary><strong>⚙️ Configuration Options</strong></summary>
+<summary><strong>⚙️ Full Configuration Reference</strong></summary>
 
 ```yaml
-# config.yaml
+# ~/.config/compass/config.yaml
 tracking:
-  interval: 10s # How often to capture
-  capture_screenshots: true # Visual record
-  track_all_windows: true # Not just active window
+  interval: 10s # How often to capture workspace state
+  screenshot_interval: 60s # How often to take screenshots (independent of capture)
+  capture_screenshots: true # Take screenshots for visual record
+  track_all_windows: true # Track all windows, not just active
 
 privacy:
-  blur_screenshots: true # Blur sensitive content
-  exclude_apps: # Never track these
+  exclude_apps: # Apps to never track
     - "1Password"
-    - "Banking Apps"
-  redact_titles: # Hide window titles containing
-    - "password"
-    - "private"
+    - "Bitwarden"
+    - "Banking"
+    - "Password"
+    - "Keychain Access"
+  exclude_titles: # Window titles to filter out
     - "incognito"
+    - "private"
+    - "password"
+    - "secure"
+    - "login"
+  blur_sensitive: true # Blur sensitive content in screenshots
+  auto_delete_after: 30 # Days after which to auto-delete data
 
-categorization:
-  mode: "rules" # Smart rules, no AI needed
+server:
+  port: "8080" # Web dashboard port
+  host: "localhost" # Web dashboard host
 
 storage:
-  local_only: true # Never leaves your machine
-  retention_days: 30 # Auto-delete old data
-  database: "sqlite" # Simple, fast, local
+  path: "~/.compass/compass.db" # Database file location
+  max_size: "1GB" # Maximum database size
+
+ai: # Optional AI features (future)
+  enabled: false
+  provider: "ollama"
+  model: "llama2"
 ```
 
 </details>
+
+### **🎯 Key Configuration Tips**
+
+#### **Screenshot Intervals**
+
+```yaml
+# Example configurations for different use cases:
+
+# High-frequency monitoring with reasonable screenshots
+tracking:
+  interval: 10s         # Detailed workspace tracking
+  screenshot_interval: 300s  # Screenshots every 5 minutes
+
+# Battery-optimized configuration
+tracking:
+  interval: 30s         # Less frequent capture
+  screenshot_interval: 600s  # Screenshots every 10 minutes
+
+# Real-time tracking with minimal screenshots
+tracking:
+  interval: 5s          # Very frequent workspace capture
+  screenshot_interval: 180s  # Screenshots every 3 minutes
+```
+
+#### **Privacy Controls**
+
+```yaml
+privacy:
+  exclude_apps: # Never track these applications
+    - "1Password" # Password managers
+    - "Banking" # Financial apps
+    - "VPN" # VPN clients
+
+  exclude_titles: # Filter window titles containing:
+    - "incognito" # Private browsing
+    - "password" # Password forms
+    - "secure" # Secure pages
+```
+
+### **🔄 Applying Configuration Changes**
+
+After editing your config file:
+
+1. **Stop Compass** (if running): `Ctrl+C` or `compass stop`
+2. **Restart Compass**: `compass start`
+3. **Verify settings**: Check the startup log for confirmation
+
+```bash
+# Example startup log showing new settings:
+[2024-08-22 21:50:44] Starting capture engine with 10s interval
+[2024-08-22 21:50:44] Screenshot interval: 300s (5 minutes)
+[2024-08-22 21:50:44] Dashboard: http://localhost:8080
+```
+
+### **🚨 Common Configuration Mistakes**
+
+| ❌ **Mistake**                  | ✅ **Solution**                                   |
+| ------------------------------- | ------------------------------------------------- |
+| Editing `./config.yaml.example` | Edit `~/.config/compass/config.yaml`              |
+| Not restarting after changes    | Always restart Compass after config changes       |
+| Invalid time formats            | Use formats like `10s`, `5m`, `1h`                |
+| Missing required fields         | Copy from `config.yaml.example` as starting point |
 
 ## 🔒 Privacy & Security
 
@@ -923,14 +1049,17 @@ compass/
 │   │   └── tsconfig.json             # TypeScript configuration
 │
 ├── 📁 Documentation
-│   ├── README.md                     # This file
+│   ├── README.md                     # This file - Main project documentation
 │   ├── CONTRIBUTING.md               # Contribution guidelines
+│   ├── CONFIG.md                     # Comprehensive configuration guide
+│   ├── CHANGELOG.md                  # Version history & changes
 │   └── docs/                         # Additional documentation
 │
-└── 📁 Configuration
-    ├── config.yaml.example           # Example configuration
-    ├── install.sh                    # Installation script
-    └── docker-compose.yml            # Container orchestration [Planned]
+├── 📁 Configuration
+│   ├── config.yaml.example           # Example configuration
+│   ├── .cursorrules                  # Cursor AI development rules
+│   ├── install.sh                    # Installation script
+│   └── docker-compose.yml            # Container orchestration [Planned]
 ```
 
 ### Window Tracking Method

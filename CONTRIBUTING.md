@@ -5,6 +5,7 @@ Thank you for your interest in contributing to Compass! This document provides c
 ## 🌟 **What You're Contributing To**
 
 Compass is a **comprehensive workspace intelligence platform** with:
+
 - **Backend (Go):** CLI tool, REST API, WebSocket server, window tracking, smart categorization
 - **Frontend (React):** Advanced dashboard with Timeline views, Analytics, AI insights, Screenshot gallery
 - **Platform Support:** macOS (complete), Linux (in progress), Windows (planned)
@@ -14,6 +15,7 @@ Compass is a **comprehensive workspace intelligence platform** with:
 ## 🚀 **Quick Start for Contributors**
 
 ### **Prerequisites**
+
 - **Backend:** Go 1.21+, Make, SQLite3
 - **Frontend:** Node.js 18+, npm/yarn
 - **Development:** Git, VS Code (recommended)
@@ -22,6 +24,7 @@ Compass is a **comprehensive workspace intelligence platform** with:
 ### **🏗️ Full Development Setup**
 
 #### **🎯 Automatic Setup (Recommended)**
+
 ```bash
 # 1. Fork and clone
 git clone https://github.com/[your-username]/compass.git
@@ -39,6 +42,7 @@ open http://localhost:8080       # Backend API endpoints
 ```
 
 #### **🛠️ Manual Setup (For Learning)**
+
 ```bash
 # 1. Fork and clone
 git clone https://github.com/[your-username]/compass.git
@@ -68,6 +72,7 @@ curl http://localhost:8080/api/health  # API health check
 ```
 
 #### **⚡ Development Tools**
+
 ```bash
 # Available after setup
 ./dev-test.sh                   # Run all tests
@@ -92,6 +97,7 @@ open http://localhost:8080
 ### 🟢 **High Priority (Great for New Contributors)**
 
 #### **🖥️ Backend (Go) Contributions**
+
 - **`internal/capture/platform_linux.go`** - Linux window tracking using X11/Wayland APIs
 - **`internal/capture/platform_windows.go`** - Windows window tracking with Win32 API
 - **Enhanced categorization rules** in `internal/processor/categorizer.go`
@@ -100,6 +106,7 @@ open http://localhost:8080
 - **Database schema enhancements** and query optimization
 
 #### **⚛️ Frontend (React) Contributions**
+
 - **New dashboard components** for advanced analytics
 - **Timeline view enhancements** - drill-down functionality, more granular views
 - **Chart improvements** - new visualization types, interactive features
@@ -110,11 +117,13 @@ open http://localhost:8080
 - **Performance optimization** - component memoization, lazy loading
 
 #### **🌐 Browser Integration**
+
 - **Chrome extension** for tab tracking and context awareness
 - **Firefox extension** for comprehensive browser monitoring
 - **Safari integration** (macOS) for complete browser coverage
 
 #### **📱 Cross-Platform Support**
+
 - **Linux testing and fixes** for X11/Wayland environments
 - **Windows testing and implementation** for Win32 API integration
 - **macOS accessibility** improvements and edge case handling
@@ -122,12 +131,14 @@ open http://localhost:8080
 ### 🟡 **Medium Priority (Some Experience Required)**
 
 #### **🔍 Advanced Analytics**
+
 - **Machine learning patterns** for productivity insights
 - **Predictive analytics** for suggesting optimal work patterns
 - **Advanced correlation analysis** between different productivity metrics
 - **Goal tracking and progress monitoring** features
 
 #### **⚡ Performance & Optimization**
+
 - **Database query optimization** and indexing strategies
 - **Memory usage profiling** and optimization
 - **Capture efficiency improvements** - reduce system impact
@@ -135,6 +146,7 @@ open http://localhost:8080
 - **WebSocket connection management** and reconnection logic
 
 #### **🔒 Privacy & Security**
+
 - **Enhanced privacy filters** with regex pattern matching
 - **Data encryption at rest** options for sensitive information
 - **Anonymization features** for data sharing/export
@@ -143,12 +155,14 @@ open http://localhost:8080
 ### 🔴 **Advanced (Experienced Contributors)**
 
 #### **🤖 AI & Intelligence**
+
 - **Local AI integration** with Ollama for privacy-preserving insights
 - **Natural language processing** for activity summarization
 - **Advanced pattern recognition** using machine learning
 - **Productivity scoring algorithms** and recommendation systems
 
 #### **🔗 Integrations & Ecosystem**
+
 - **IDE plugins** - VS Code, IntelliJ, Vim extensions
 - **Time tracking exports** - Toggl, RescueTime, Clockify compatibility
 - **Calendar integration** - Google Calendar, Outlook, Apple Calendar
@@ -156,6 +170,7 @@ open http://localhost:8080
 - **API ecosystem** - third-party integration support
 
 #### **📊 Enterprise Features**
+
 - **Team dashboards** and organization-level insights
 - **Advanced reporting** and analytics for productivity teams
 - **Data governance** and administrative controls
@@ -166,6 +181,7 @@ open http://localhost:8080
 ### **🖥️ Backend (Go) Guidelines**
 
 #### **Code Style**
+
 ```bash
 # Required tools
 go install golang.org/x/tools/cmd/goimports@latest
@@ -178,8 +194,9 @@ golangci-lint run                # Comprehensive linting
 ```
 
 #### **Go Best Practices**
+
 - Follow **Go conventions** - use `gofmt`, meaningful names, error handling
-- **Package structure** - keep packages focused and avoid circular dependencies  
+- **Package structure** - keep packages focused and avoid circular dependencies
 - **Error handling** - always handle errors, use wrapped errors for context
 - **Context usage** - pass context for cancellation and timeouts
 - **Interface design** - prefer small, focused interfaces
@@ -188,6 +205,7 @@ golangci-lint run                # Comprehensive linting
 ### **⚛️ Frontend (React) Guidelines**
 
 #### **Code Style**
+
 ```bash
 # Required tools in dashboard/
 npm install                      # Install dependencies
@@ -197,6 +215,7 @@ npm run type-check               # TypeScript validation
 ```
 
 #### **React/TypeScript Best Practices**
+
 - **Component design** - functional components with hooks, proper prop typing
 - **State management** - use React hooks, TanStack Query for server state
 - **Performance** - memoization with `useMemo`/`useCallback`, lazy loading
@@ -217,6 +236,7 @@ npm run type-check               # TypeScript validation
 ### **🧪 Testing Requirements**
 
 #### **Backend Testing**
+
 ```bash
 # Unit tests
 go test ./...                    # Run all tests
@@ -230,6 +250,7 @@ make test-integration            # API endpoint testing
 ```
 
 #### **Frontend Testing**
+
 ```bash
 # In dashboard/
 npm test                         # Jest unit tests
@@ -239,21 +260,80 @@ npm run test:components          # Component testing with React Testing Library
 ```
 
 #### **Manual Testing Checklist**
+
 - ✅ **Backend:** API endpoints respond correctly, window tracking works, data persists
 - ✅ **Frontend:** All dashboard tabs load, real-time updates work, responsive design
 - ✅ **Integration:** Frontend correctly displays backend data, WebSocket connections stable
 - ✅ **Cross-Platform:** Test on macOS (required), Linux (if available), Windows (if available)
 - ✅ **Performance:** CPU usage <5%, memory usage <100MB, UI responsive <16ms frame time
 
+### **🔧 Configuration Management**
+
+#### **Configuration File Locations**
+
+**⚠️ CRITICAL**: Understanding where configuration files are located is essential for development and testing.
+
+```bash
+# System configuration (where Compass loads from)
+~/.config/compass/config.yaml
+
+# Project examples (for reference only)
+./config.yaml.example
+
+# Development testing
+./test-config.yaml  # Create temporarily for testing
+```
+
+#### **Configuration Development Workflow**
+
+1. **Testing Configuration Changes**
+
+   ```bash
+   # Method 1: Create test config
+   cp config.yaml.example test-config.yaml
+   # Edit test-config.yaml with your changes
+   cp test-config.yaml ~/.config/compass/config.yaml
+
+   # Method 2: Direct edit system config
+   code ~/.config/compass/config.yaml
+   ```
+
+2. **Validating Configuration**
+
+   ```bash
+   # Test configuration loading
+   ./compass start
+   # Check logs for configuration errors or validation failures
+   ```
+
+3. **Updating Documentation**
+   When adding new configuration options:
+   - ✅ Update `pkg/types/types.go` (add to struct)
+   - ✅ Update `internal/config/config.go` (defaults & validation)
+   - ✅ Update `config.yaml.example` (add example)
+   - ✅ Update `README.md` (document the option)
+   - ✅ Update `CHANGELOG.md` (record the change)
+
+#### **Configuration Testing Checklist**
+
+- [ ] **Default Values**: Ensure sensible defaults in `config.go`
+- [ ] **Validation**: Add validation rules in `ValidateConfig()`
+- [ ] **Examples**: Update `config.yaml.example` with clear comments
+- [ ] **Documentation**: Update README configuration section
+- [ ] **Type Safety**: Ensure proper YAML/JSON tags on structs
+- [ ] **Backward Compatibility**: Don't break existing configurations
+
 ### **📚 Documentation Standards**
 
 #### **Code Documentation**
+
 - **Go:** Use GoDoc comments for exported functions and types
 - **React:** JSDoc comments for complex components and hooks
 - **README updates** for new features or architectural changes
 - **API documentation** for new endpoints using OpenAPI/Swagger format
 
 #### **Commit Messages**
+
 ```bash
 # Format: type(scope): description
 feat(timeline): add month view with daily aggregation
@@ -261,9 +341,11 @@ fix(capture): resolve memory leak in window tracking
 docs(readme): update installation instructions
 test(api): add integration tests for stats endpoints
 refactor(ui): extract reusable chart components
+config(tracking): add screenshot_interval configuration option
 ```
 
 #### **Pull Request Requirements**
+
 - 📝 **Clear description** of changes and motivation
 - 🧪 **Test coverage** for new functionality
 - 📸 **Screenshots** for UI changes
@@ -273,6 +355,7 @@ refactor(ui): extract reusable chart components
 ## 🔧 **Development Workflow**
 
 ### **1. Setting Up Development**
+
 ```bash
 # Create feature branch
 git checkout -b feature/your-feature-name
@@ -286,6 +369,7 @@ make test
 ```
 
 ### **2. Testing Changes**
+
 ```bash
 # Build and test
 make build
@@ -298,12 +382,13 @@ open http://localhost:8080                # Test dashboard
 
 # Test edge cases
 # - Multiple monitors
-# - Different applications  
+# - Different applications
 # - Privacy filtering
 # - Long-running sessions
 ```
 
 ### **3. Submitting Changes**
+
 ```bash
 # Commit with clear messages
 git add .
@@ -323,6 +408,7 @@ git push origin feature/your-feature-name
 ## 🐛 **Bug Reports**
 
 ### **Good Bug Report Includes:**
+
 ```bash
 # System information
 ./compass status
@@ -341,15 +427,18 @@ uname -a
 ### **Common Issues & Solutions:**
 
 **macOS Permission Issues:**
+
 - Grant accessibility permissions in System Preferences
 - Check Terminal has "Screen Recording" permission
 
 **Performance Issues:**
+
 - Check capture interval (`config.yaml`)
 - Monitor database size
 - Review excluded applications
 
 **Data Not Showing:**
+
 - Verify AppleScript permissions
 - Check database connectivity
 - Review privacy filters
@@ -450,18 +539,21 @@ compass/
 ### **🎯 Key Areas for Contribution**
 
 #### **🟢 Beginner-Friendly**
+
 - **Frontend components** - New charts, UI improvements, mobile responsiveness
 - **Documentation** - API docs, tutorials, examples
 - **Testing** - Unit tests, integration tests, manual testing on different platforms
 - **Bug fixes** - Small improvements and edge case handling
 
 #### **🟡 Intermediate**
+
 - **Backend features** - New API endpoints, enhanced categorization, performance optimization
 - **Data analysis** - Advanced analytics algorithms, pattern recognition
 - **Cross-platform support** - Linux/Windows window tracking implementation
 - **Browser integrations** - Extensions for Chrome, Firefox, Safari
 
 #### **🔴 Advanced**
+
 - **AI integration** - Local LLM integration, machine learning features
 - **Architecture improvements** - Scalability, microservices, advanced real-time features
 - **Enterprise features** - Team collaboration, advanced privacy controls
@@ -470,19 +562,20 @@ compass/
 ## 🎖️ **Contributor Recognition**
 
 Contributors will be:
+
 - **Listed in README** for significant contributions
-- **Credited in releases** 
+- **Credited in releases**
 - **Added to CONTRIBUTORS.md**
 - **Invited to core team** for sustained contributions
 
 ## 💬 **Questions?**
 
 - **GitHub Issues**: For feature requests and bug reports
-- **GitHub Discussions**: For questions and ideas  
+- **GitHub Discussions**: For questions and ideas
 - **Email**: [Contact maintainer if needed]
 
 ---
 
 **🧭 Thank you for contributing to Compass!**
 
-*Help us build the ultimate workspace intelligence tool.*
+_Help us build the ultimate workspace intelligence tool._

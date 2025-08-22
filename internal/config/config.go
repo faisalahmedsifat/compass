@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -13,11 +14,12 @@ import (
 
 // Default configuration values
 const (
-	DefaultInterval       = 10 * time.Second
-	DefaultPort           = "8080"
-	DefaultHost           = "localhost"
-	DefaultAutoDeleteDays = 30
-	DefaultMaxSize        = "1GB"
+	DefaultInterval           = 10 * time.Second
+	DefaultScreenshotInterval = 60 * time.Second // Screenshots every minute by default
+	DefaultPort               = "8080"
+	DefaultHost               = "localhost"
+	DefaultAutoDeleteDays     = 30
+	DefaultMaxSize            = "1GB"
 )
 
 // Load loads configuration from file, environment, and defaults
@@ -40,11 +42,23 @@ func Load() (*types.Config, error) {
 			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 		// Config file not found is OK, we'll use defaults
+		log.Printf("Config file not found, using defaults")
+	} else {
+		log.Printf("Config file loaded from: %s", viper.ConfigFileUsed())
 	}
 
 	// Unmarshal into struct
 	if err := viper.Unmarshal(config); err != nil {
 		return nil, fmt.Errorf("error unmarshaling config: %w", err)
+	}
+
+	// Manually handle screenshot_interval since Viper's auto-unmarshaling isn't working for it
+	if screenshotIntervalStr := viper.GetString("tracking.screenshot_interval"); screenshotIntervalStr != "" {
+		if duration, err := time.ParseDuration(screenshotIntervalStr); err == nil {
+			config.Tracking.ScreenshotInterval = duration
+		} else {
+			log.Printf("Failed to parse screenshot_interval '%s': %v", screenshotIntervalStr, err)
+		}
 	}
 
 	// Validate configuration
@@ -60,6 +74,7 @@ func DefaultConfig() *types.Config {
 	return &types.Config{
 		Tracking: &types.TrackingConfig{
 			Interval:           DefaultInterval,
+			ScreenshotInterval: DefaultScreenshotInterval,
 			CaptureScreenshots: true,
 			TrackAllWindows:    true,
 		},
@@ -123,6 +138,10 @@ func Save(config *types.Config) error {
 func ValidateConfig(config *types.Config) error {
 	if config.Tracking.Interval < time.Second {
 		return fmt.Errorf("tracking interval must be at least 1 second")
+	}
+
+	if config.Tracking.ScreenshotInterval < time.Second {
+		return fmt.Errorf("screenshot interval must be at least 1 second")
 	}
 
 	if config.Privacy.AutoDeleteDays < 1 {

@@ -1,0 +1,177 @@
+---
+description: When developer updated a feature and pushing it to github, the changelog and all the documentations should be updated with the changes.
+alwaysApply: false
+---
+
+# Compass Project Rules for Cursor AI
+
+## Project Overview
+
+This is Compass, a comprehensive workspace intelligence platform written in Go (backend) and React/TypeScript (frontend). It tracks user workspace activity, captures screenshots, and provides analytics through a web dashboard.
+
+## Code Quality Standards
+
+### Go Backend Rules
+
+- Use Go conventions: gofmt, meaningful names, proper error handling
+- Always handle errors explicitly, use wrapped errors for context
+- Write table-driven tests for complex logic
+- Use interfaces for dependency injection
+- Follow the existing package structure in internal/
+- Add GoDoc comments for all exported functions and types
+
+### React/TypeScript Frontend Rules
+
+- Use functional components with hooks
+- Implement proper TypeScript typing - no `any` types
+- Use Tailwind CSS for styling, follow existing design patterns
+- Implement proper error boundaries and loading states
+- Use TanStack Query for server state management
+- Add JSDoc comments for complex components and hooks
+
+## Configuration Management Rules
+
+### CRITICAL: Configuration File Locations
+
+When working with configuration:
+
+- ✅ System config: `~/.config/compass/config.yaml` (where Compass loads from)
+- ❌ Never edit project files as config: `./config.yaml` or `./config.yaml.example`
+- Always remind users about correct config file locations
+- When adding config options, update ALL documentation
+
+### Configuration Change Checklist
+
+When adding new configuration options, you MUST update:
+
+1. `pkg/types/types.go` - Add field to appropriate config struct
+2. `internal/config/config.go` - Add default value and validation
+3. `config.yaml.example` - Add example with clear comments
+4. `README.md` - Update configuration section
+5. `CONFIG.md` - Add detailed documentation
+6. `CONTRIBUTING.md` - Update development guidelines
+7. `CHANGELOG.md` - Record the change
+
+## Documentation Requirements
+
+### Before Any Commit - MANDATORY CHECKS:
+
+1. **README.md Updates**: If the change affects user experience, installation, or configuration
+2. **CONTRIBUTING.md Updates**: If the change affects development workflow or adds new concepts
+3. **CONFIG.md Updates**: If the change involves configuration options
+4. **CHANGELOG.md Updates**: For ALL user-facing changes, bug fixes, and new features
+5. **Code Comments**: Add/update GoDoc or JSDoc as needed
+
+### Documentation Standards:
+
+- Use clear, actionable language
+- Include code examples for complex concepts
+- Add troubleshooting sections for common issues
+- Use consistent emoji and formatting patterns
+- Always include configuration examples with multiple use cases
+
+### Changelog Format:
+
+```markdown
+## [Version] - YYYY-MM-DD
+
+### Added
+
+- New feature descriptions with examples
+
+### Changed
+
+- Modified behavior explanations
+
+### Fixed
+
+- Bug fix descriptions
+
+### Configuration
+
+- New config options with examples
+```
+
+## Commit Message Rules
+
+### Required Format:
+
+```
+type(scope): brief description
+
+Longer description if needed
+
+Updated documentation:
+- [ ] README.md
+- [ ] CONTRIBUTING.md
+- [ ] CONFIG.md
+- [ ] CHANGELOG.md
+```
+
+### Commit Types:
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation only changes
+- `config`: Configuration-related changes
+- `refactor`: Code change that neither fixes a bug nor adds a feature
+- `test`: Adding missing tests
+- `chore`: Changes to build process or auxiliary tools
+
+## Common Patterns and Conventions
+
+### File Structure:
+
+- Backend: `internal/` for private packages, `pkg/` for public APIs
+- Frontend: `src/components/` for React components, `src/hooks/` for custom hooks
+- Documentation: Root level markdown files
+- Configuration: `config.yaml.example` for examples, system config in `~/.config/compass/`
+
+### Error Handling:
+
+- Go: Always return and handle errors, use `fmt.Errorf` for context
+- TypeScript: Use proper error boundaries and error states in components
+- Configuration: Validate all config inputs with helpful error messages
+
+### Testing:
+
+- Unit tests for all business logic
+- Integration tests for API endpoints
+- Manual testing checklist for UI changes
+- Configuration validation tests
+
+## Pre-Commit Reminders
+
+Before suggesting any code changes, always ask:
+
+1. **Documentation Impact**: "Does this change require documentation updates?"
+2. **Configuration Impact**: "Does this change affect how users configure Compass?"
+3. **Breaking Changes**: "Will this break existing user configurations or workflows?"
+4. **Testing**: "What testing is needed for this change?"
+5. **Changelog**: "How should this be described in the changelog?"
+
+## Security and Privacy Guidelines
+
+- Never log sensitive configuration values
+- Always validate configuration inputs
+- Respect privacy settings for screenshots and window tracking
+- Use secure defaults for all configuration options
+- Document security implications of configuration changes
+
+## Performance Considerations
+
+- Monitor capture interval performance impact
+- Validate screenshot interval efficiency
+- Consider battery usage on mobile/laptop devices
+- Profile memory usage for long-running sessions
+- Document performance implications of configuration options
+
+## When Helping with Issues:
+
+1. **Always check configuration first**: Most issues are configuration-related
+2. **Verify file locations**: Users often edit wrong config files
+3. **Check recent changes**: Look at CHANGELOG.md for recent breaking changes
+4. **Validate environment**: Ensure proper Go/Node versions and dependencies
+5. **Document solutions**: Update troubleshooting sections for common issues
+
+Remember: Every code change should improve the user experience and be properly documented. When in doubt, err on the side of more documentation rather than less.
