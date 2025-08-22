@@ -1,6 +1,6 @@
+import { Award, Clock, Zap } from 'lucide-react';
 import React from 'react';
-import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from 'recharts';
-import { Zap, Award, Clock } from 'lucide-react';
+import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'recharts';
 import type { AdvancedAnalytics } from '../types';
 
 interface AppEfficiencyRadarProps {
