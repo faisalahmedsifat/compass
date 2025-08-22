@@ -64,3 +64,55 @@ export interface ApiInfo {
     messages: string;
   };
 }
+
+export interface FocusPattern {
+  hour: number;
+  day: string;
+  focusScore: number;
+  productivity: number;
+  contextSwitches: number;
+  activeTime: number;
+}
+
+export interface AppTransition {
+  fromApp: string;
+  toApp: string;
+  frequency: number;
+  avgDuration: number;
+  category: string;
+}
+
+export interface EnergyMetrics {
+  timestamp: string;
+  energyLevel: number;
+  productivity: number;
+  contextSwitches: number;
+  flowState: number;
+}
+
+export interface AdvancedAnalytics {
+  focusPatterns: FocusPattern[];
+  appTransitions: AppTransition[];
+  energyMetrics: EnergyMetrics[];
+  appEfficiency: {
+    app: string;
+    efficiency: number;
+    timeSpent: number;
+    outputScore: number;
+    avgFocusDuration: number;
+  }[];
+  weeklyTrend: {
+    day: string;
+    planned: number;
+    actual: number;
+    efficiency: number;
+    mood: number;
+  }[];
+  insights: {
+    type: 'optimization' | 'pattern' | 'recommendation';
+    title: string;
+    description: string;
+    impact: 'high' | 'medium' | 'low';
+    category: string;
+  }[];
+}
