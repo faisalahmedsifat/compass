@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	Version   = "0.1.0"  // Will be overridden during build
+	Version   = "0.1.0"   // Will be overridden during build
 	BuildTime = "unknown" // Will be set during build
 	GitCommit = "unknown" // Will be set during build
 	cfgFile   string
