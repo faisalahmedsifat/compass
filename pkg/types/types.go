@@ -37,29 +37,29 @@ type Activity struct {
 	AllWindows    []Window  `json:"all_windows"`
 	Category      string    `json:"category"`
 	Confidence    float64   `json:"confidence"`
-	Screenshot    []byte    `json:"-"` // Don't serialize screenshots in API
+	Screenshot    []byte    `json:"-"`              // Don't serialize screenshots in API
 	HasScreenshot bool      `json:"has_screenshot"` // Indicate if screenshot exists
 }
 
 // WorkspaceSnapshot represents complete workspace state at a point in time
 type WorkspaceSnapshot struct {
-	Timestamp     time.Time `json:"timestamp"`
-	ActiveWindow  Window    `json:"active_window"`
-	AllWindows    []Window  `json:"all_windows"`
-	WindowCount   int       `json:"window_count"`
-	Category      string    `json:"category"`
-	Screenshot    []byte    `json:"-"`
+	Timestamp    time.Time `json:"timestamp"`
+	ActiveWindow Window    `json:"active_window"`
+	AllWindows   []Window  `json:"all_windows"`
+	WindowCount  int       `json:"window_count"`
+	Category     string    `json:"category"`
+	Screenshot   []byte    `json:"-"`
 }
 
 // Stats represents aggregated statistics
 type Stats struct {
-	Period         string                    `json:"period"`
-	TotalTime      time.Duration             `json:"total_time"`
-	ByApp          map[string]time.Duration  `json:"by_app"`
-	ByCategory     map[string]time.Duration  `json:"by_category"`
-	Patterns       []Pattern                 `json:"patterns"`
+	Period          string                   `json:"period"`
+	TotalTime       time.Duration            `json:"total_time"`
+	ByApp           map[string]time.Duration `json:"by_app"`
+	ByCategory      map[string]time.Duration `json:"by_category"`
+	Patterns        []Pattern                `json:"patterns"`
 	ContextSwitches int                      `json:"context_switches"`
-	LongestFocus   time.Duration             `json:"longest_focus"`
+	LongestFocus    time.Duration            `json:"longest_focus"`
 }
 
 // Pattern represents a common window combination
@@ -74,26 +74,26 @@ type Pattern struct {
 
 // HourlyStats for aggregated data
 type HourlyStats struct {
-	ID               int64     `json:"id"`
-	HourBucket       time.Time `json:"hour_bucket"`
-	AppName          string    `json:"app_name"`
-	Category         string    `json:"category"`
-	TotalSeconds     int       `json:"total_seconds"`
-	ActiveSeconds    int       `json:"active_seconds"`
-	BackgroundSeconds int      `json:"background_seconds"`
-	SwitchCount      int       `json:"switch_count"`
-	WindowCountAvg   float64   `json:"window_count_avg"`
+	ID                int64     `json:"id"`
+	HourBucket        time.Time `json:"hour_bucket"`
+	AppName           string    `json:"app_name"`
+	Category          string    `json:"category"`
+	TotalSeconds      int       `json:"total_seconds"`
+	ActiveSeconds     int       `json:"active_seconds"`
+	BackgroundSeconds int       `json:"background_seconds"`
+	SwitchCount       int       `json:"switch_count"`
+	WindowCountAvg    float64   `json:"window_count_avg"`
 }
 
 // Session represents a user session
 type Session struct {
-	ID               int64     `json:"id"`
-	StartTime        time.Time `json:"start_time"`
-	EndTime          time.Time `json:"end_time"`
-	TotalActivities  int       `json:"total_activities"`
-	TotalApps        int       `json:"total_apps"`
-	TotalCategories  int       `json:"total_categories"`
-	SummaryJSON      string    `json:"summary_json"`
+	ID              int64     `json:"id"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	TotalActivities int       `json:"total_activities"`
+	TotalApps       int       `json:"total_apps"`
+	TotalCategories int       `json:"total_categories"`
+	SummaryJSON     string    `json:"summary_json"`
 }
 
 // CurrentWorkspace represents real-time workspace state
@@ -210,4 +210,3 @@ func (a *Activity) MarshalJSON() ([]byte, error) {
 		Timestamp: a.Timestamp.Format(time.RFC3339),
 	})
 }
-

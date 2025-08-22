@@ -36,10 +36,10 @@ type Categorizer interface {
 // NewCaptureEngine creates a new capture engine
 func NewCaptureEngine(config *types.Config, storage Storage, categorizer Categorizer, activityChan chan *types.Activity) *CaptureEngine {
 	var windowMgr types.WindowManager
-	
+
 	// Use platform-specific implementation
 	windowMgr = newPlatformWindowManager()
-	
+
 	return &CaptureEngine{
 		windowMgr:     windowMgr,
 		storage:       storage,
@@ -54,10 +54,10 @@ func NewCaptureEngine(config *types.Config, storage Storage, categorizer Categor
 // Start begins the capture process
 func (c *CaptureEngine) Start(ctx context.Context) error {
 	log.Printf("Starting capture engine with %v interval", c.interval)
-	
+
 	// Initialize last capture time
 	c.lastCapture = time.Time{}
-	
+
 	ticker := time.NewTicker(c.interval)
 	defer ticker.Stop()
 
@@ -154,12 +154,12 @@ func (c *CaptureEngine) captureWorkspaceSnapshot() (*types.WorkspaceSnapshot, er
 	}
 
 	snapshot := &types.WorkspaceSnapshot{
-		Timestamp:     time.Now(),
-		ActiveWindow:  activeWindow,
-		AllWindows:    windowValues,
-		WindowCount:   len(windowValues),
-		Category:      category,
-		Screenshot:    screenshot,
+		Timestamp:    time.Now(),
+		ActiveWindow: activeWindow,
+		AllWindows:   windowValues,
+		WindowCount:  len(windowValues),
+		Category:     category,
+		Screenshot:   screenshot,
 	}
 
 	return snapshot, nil
@@ -169,16 +169,16 @@ func (c *CaptureEngine) captureWorkspaceSnapshot() (*types.WorkspaceSnapshot, er
 func (c *CaptureEngine) snapshotToActivity(snapshot *types.WorkspaceSnapshot) *types.Activity {
 	// Calculate focus duration since last capture
 	var focusDuration int
-	
+
 	if !c.lastCapture.IsZero() {
 		// Calculate time since last capture (limited to the interval)
 		timeSinceLastCapture := snapshot.Timestamp.Sub(c.lastCapture)
-		
+
 		// Cap at interval duration to prevent accumulation errors
 		if timeSinceLastCapture > c.interval {
 			timeSinceLastCapture = c.interval
 		}
-		
+
 		// Only count time if the same window is still active
 		totalFocusTime := c.windowMgr.GetFocusDuration()
 		if totalFocusTime >= timeSinceLastCapture {
@@ -214,8 +214,8 @@ func (c *CaptureEngine) snapshotToActivity(snapshot *types.WorkspaceSnapshot) *t
 
 // PrivacyFilter handles privacy and security filtering
 type PrivacyFilter struct {
-	config         *types.PrivacyConfig
-	excludeApps    map[string]bool
+	config          *types.PrivacyConfig
+	excludeApps     map[string]bool
 	excludePatterns []*regexp.Regexp
 }
 

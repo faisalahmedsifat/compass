@@ -226,8 +226,8 @@ func (d *Database) GetStats(period string, date time.Time) (*types.Stats, error)
 	}
 
 	stats := &types.Stats{
-		Period:    period,
-		ByApp:     make(map[string]time.Duration),
+		Period:     period,
+		ByApp:      make(map[string]time.Duration),
 		ByCategory: make(map[string]time.Duration),
 	}
 
@@ -300,7 +300,7 @@ func (d *Database) GetStats(period string, date time.Time) (*types.Stats, error)
 // GetScreenshot retrieves a screenshot by activity ID
 func (d *Database) GetScreenshot(activityID int64) ([]byte, error) {
 	query := `SELECT screenshot FROM activities WHERE id = ? AND screenshot IS NOT NULL`
-	
+
 	var screenshot []byte
 	err := d.db.QueryRow(query, activityID).Scan(&screenshot)
 	if err != nil {
@@ -309,7 +309,7 @@ func (d *Database) GetScreenshot(activityID int64) ([]byte, error) {
 		}
 		return nil, fmt.Errorf("failed to get screenshot: %w", err)
 	}
-	
+
 	return screenshot, nil
 }
 
@@ -390,7 +390,7 @@ func (d *Database) getPatterns(from, to time.Time) ([]types.Pattern, error) {
 // CleanupOldData removes old activities based on retention policy
 func (d *Database) CleanupOldData(retentionDays int) error {
 	cutoff := time.Now().AddDate(0, 0, -retentionDays)
-	
+
 	query := `DELETE FROM activities WHERE timestamp < ?`
 	result, err := d.db.Exec(query, cutoff)
 	if err != nil {
@@ -399,7 +399,7 @@ func (d *Database) CleanupOldData(retentionDays int) error {
 
 	rowsAffected, _ := result.RowsAffected()
 	log.Printf("Cleaned up %d old activity records", rowsAffected)
-	
+
 	return nil
 }
 
@@ -413,4 +413,3 @@ func formatDuration(d time.Duration) string {
 	}
 	return fmt.Sprintf("%dh %dm", int(d.Hours()), int(d.Minutes())%60)
 }
-

@@ -190,7 +190,7 @@ func (m *DarwinWindowManager) parseAllWindowsInfo(output string) ([]*types.Windo
 
 	lines := strings.Split(output, "\n")
 	windows := make([]*types.Window, 0, len(lines))
-	
+
 	// Get active window first to mark it correctly
 	activeWindow, err := m.GetActiveWindow()
 	if err != nil {
@@ -209,9 +209,9 @@ func (m *DarwinWindowManager) parseAllWindowsInfo(output string) ([]*types.Windo
 		}
 
 		// Mark active window
-		if activeWindow != nil && 
-		   window.AppName == activeWindow.AppName && 
-		   window.Title == activeWindow.Title {
+		if activeWindow != nil &&
+			window.AppName == activeWindow.AppName &&
+			window.Title == activeWindow.Title {
 			window.IsActive = true
 			window.LastActive = time.Now()
 		} else {

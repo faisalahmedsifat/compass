@@ -65,7 +65,7 @@ func createDefaultRules() []types.Rule {
 						hasIDE = true
 					}
 					if strings.Contains(strings.ToLower(w.Title), "localhost") ||
-					   strings.Contains(strings.ToLower(w.Title), "127.0.0.1") {
+						strings.Contains(strings.ToLower(w.Title), "127.0.0.1") {
 						hasLocalhost = true
 					}
 					if isTerminal(w.AppName) {
@@ -86,13 +86,13 @@ func createDefaultRules() []types.Rule {
 
 				for _, w := range windows {
 					title := strings.ToLower(w.Title)
-					if isTerminal(w.AppName) && (strings.Contains(title, "error") || 
-					   strings.Contains(title, "exception") || 
-					   strings.Contains(title, "failed")) {
+					if isTerminal(w.AppName) && (strings.Contains(title, "error") ||
+						strings.Contains(title, "exception") ||
+						strings.Contains(title, "failed")) {
 						hasErrorTerminal = true
 					}
-					if strings.Contains(title, "stack overflow") || 
-					   strings.Contains(title, "stackoverflow") {
+					if strings.Contains(title, "stack overflow") ||
+						strings.Contains(title, "stackoverflow") {
 						hasStackOverflow = true
 					}
 					if isIDE(w.AppName) {
@@ -113,9 +113,9 @@ func createDefaultRules() []types.Rule {
 
 				for _, w := range windows {
 					title := strings.ToLower(w.Title)
-					if strings.Contains(title, "github") || 
-					   strings.Contains(title, "pull request") ||
-					   strings.Contains(title, "merge request") {
+					if strings.Contains(title, "github") ||
+						strings.Contains(title, "pull request") ||
+						strings.Contains(title, "merge request") {
 						hasGitHub = true
 					}
 					if isIDE(w.AppName) {
@@ -140,12 +140,12 @@ func createDefaultRules() []types.Rule {
 				for _, w := range windows {
 					title := strings.ToLower(w.Title)
 					app := strings.ToLower(w.AppName)
-					
+
 					if strings.Contains(title, "documentation") ||
-					   strings.Contains(title, "docs") ||
-					   strings.Contains(title, "tutorial") ||
-					   strings.Contains(title, "guide") ||
-					   strings.Contains(title, "learn") {
+						strings.Contains(title, "docs") ||
+						strings.Contains(title, "tutorial") ||
+						strings.Contains(title, "guide") ||
+						strings.Contains(title, "learn") {
 						hasDocumentation = true
 					}
 					if isIDE(w.AppName) {
@@ -160,7 +160,7 @@ func createDefaultRules() []types.Rule {
 			Category: "Learning",
 		},
 		{
-			Name:     "Communication & Collaboration", 
+			Name:     "Communication & Collaboration",
 			Priority: 6,
 			Matcher: func(windows []types.Window) bool {
 				communicationCount := 0
@@ -210,9 +210,9 @@ func createDefaultRules() []types.Rule {
 						browserCount++
 						title := strings.ToLower(w.Title)
 						if strings.Contains(title, "research") ||
-						   strings.Contains(title, "wiki") ||
-						   strings.Contains(title, "article") ||
-						   strings.Contains(title, "blog") {
+							strings.Contains(title, "wiki") ||
+							strings.Contains(title, "article") ||
+							strings.Contains(title, "blog") {
 							hasResearchKeywords = true
 						}
 					}
@@ -228,12 +228,12 @@ func createDefaultRules() []types.Rule {
 				for _, w := range windows {
 					app := strings.ToLower(w.AppName)
 					title := strings.ToLower(w.Title)
-					
-					if app == "zoom" || app == "microsoft teams" || 
-					   app == "google meet" || app == "skype" ||
-					   strings.Contains(title, "meeting") ||
-					   strings.Contains(title, "zoom") ||
-					   strings.Contains(title, "teams") {
+
+					if app == "zoom" || app == "microsoft teams" ||
+						app == "google meet" || app == "skype" ||
+						strings.Contains(title, "meeting") ||
+						strings.Contains(title, "zoom") ||
+						strings.Contains(title, "teams") {
 						return true
 					}
 				}
@@ -248,11 +248,11 @@ func createDefaultRules() []types.Rule {
 				for _, w := range windows {
 					app := strings.ToLower(w.AppName)
 					title := strings.ToLower(w.Title)
-					
+
 					if app == "mail" || app == "outlook" || app == "gmail" ||
-					   strings.Contains(title, "email") ||
-					   strings.Contains(title, "inbox") ||
-					   strings.Contains(title, "gmail") {
+						strings.Contains(title, "email") ||
+						strings.Contains(title, "inbox") ||
+						strings.Contains(title, "gmail") {
 						return true
 					}
 				}
@@ -274,7 +274,7 @@ func isIDE(appName string) bool {
 		"atom", "sublime text", "vim", "emacs",
 		"neovim", "cursor",
 	}
-	
+
 	for _, ide := range ides {
 		if strings.Contains(app, ide) {
 			return true
@@ -289,7 +289,7 @@ func isTerminal(appName string) bool {
 		"terminal", "iterm", "iterm2", "alacritty",
 		"kitty", "hyper", "warp", "tabby",
 	}
-	
+
 	for _, term := range terminals {
 		if strings.Contains(app, term) {
 			return true
@@ -304,7 +304,7 @@ func isBrowser(appName string) bool {
 		"chrome", "firefox", "safari", "edge",
 		"brave", "opera", "arc",
 	}
-	
+
 	for _, browser := range browsers {
 		if strings.Contains(app, browser) {
 			return true
@@ -320,7 +320,7 @@ func isCommunication(appName string) bool {
 		"skype", "telegram", "whatsapp", "signal",
 		"messages", "facetime",
 	}
-	
+
 	for _, comm := range commApps {
 		if strings.Contains(app, comm) {
 			return true
@@ -336,7 +336,7 @@ func isNoteTaking(appName string) bool {
 		"evernote", "onenote", "bear", "notes",
 		"markdown editor", "typora",
 	}
-	
+
 	for _, note := range noteApps {
 		if strings.Contains(app, note) {
 			return true
@@ -346,10 +346,10 @@ func isNoteTaking(appName string) bool {
 }
 
 func isWorkRelated(appName string) bool {
-	return isIDE(appName) || isTerminal(appName) || 
-		   strings.Contains(strings.ToLower(appName), "postman") ||
-		   strings.Contains(strings.ToLower(appName), "docker") ||
-		   strings.Contains(strings.ToLower(appName), "kubernetes")
+	return isIDE(appName) || isTerminal(appName) ||
+		strings.Contains(strings.ToLower(appName), "postman") ||
+		strings.Contains(strings.ToLower(appName), "docker") ||
+		strings.Contains(strings.ToLower(appName), "kubernetes")
 }
 
 func isDistraction(appName string) bool {
@@ -359,7 +359,7 @@ func isDistraction(appName string) bool {
 		"facebook", "twitter", "reddit", "twitch",
 		"spotify", "music", "games", "steam",
 	}
-	
+
 	for _, distraction := range distractions {
 		if strings.Contains(app, distraction) {
 			return true
@@ -371,7 +371,7 @@ func isDistraction(appName string) bool {
 // categorizeByApp provides fallback categorization based on single app
 func categorizeByApp(appName string) string {
 	app := strings.ToLower(appName)
-	
+
 	if isIDE(appName) {
 		return "Development"
 	}
@@ -396,7 +396,7 @@ func categorizeByApp(appName string) string {
 	if strings.Contains(app, "mail") || strings.Contains(app, "email") {
 		return "Email"
 	}
-	
+
 	return "General"
 }
 
@@ -413,23 +413,23 @@ func findActiveWindow(windows []types.Window) *types.Window {
 // GetCategoryDescription returns a human-readable description of a category
 func GetCategoryDescription(category string) string {
 	descriptions := map[string]string{
-		"Development":    "Writing, testing, or debugging code",
-		"Debugging":      "Investigating and fixing errors",
-		"Code Review":    "Reviewing code changes and collaborating",
-		"Learning":       "Reading documentation, tutorials, or studying",
-		"Communication":  "Team collaboration and messaging",
-		"Deep Work":      "Focused work with minimal distractions",
-		"Research":       "Information gathering and exploration",
-		"Meetings":       "Video calls and meetings",
-		"Email":          "Email management and correspondence",
-		"Planning":       "Task planning and organization",
-		"Browsing":       "General web browsing",
-		"Entertainment":  "Non-work activities and entertainment",
-		"General":        "General computer usage",
+		"Development":   "Writing, testing, or debugging code",
+		"Debugging":     "Investigating and fixing errors",
+		"Code Review":   "Reviewing code changes and collaborating",
+		"Learning":      "Reading documentation, tutorials, or studying",
+		"Communication": "Team collaboration and messaging",
+		"Deep Work":     "Focused work with minimal distractions",
+		"Research":      "Information gathering and exploration",
+		"Meetings":      "Video calls and meetings",
+		"Email":         "Email management and correspondence",
+		"Planning":      "Task planning and organization",
+		"Browsing":      "General web browsing",
+		"Entertainment": "Non-work activities and entertainment",
+		"General":       "General computer usage",
 		"Uncategorized": "Activity pattern not recognized",
 		"Idle":          "No active windows detected",
 	}
-	
+
 	if desc, exists := descriptions[category]; exists {
 		return desc
 	}
@@ -439,26 +439,25 @@ func GetCategoryDescription(category string) string {
 // GetCategoryColor returns a color associated with a category for UI
 func GetCategoryColor(category string) string {
 	colors := map[string]string{
-		"Development":    "#28a745", // Green
-		"Debugging":      "#dc3545", // Red
-		"Code Review":    "#17a2b8", // Cyan
-		"Learning":       "#6f42c1", // Purple
-		"Communication":  "#fd7e14", // Orange
-		"Deep Work":      "#20c997", // Teal
-		"Research":       "#6c757d", // Gray
-		"Meetings":       "#007bff", // Blue
-		"Email":          "#ffc107", // Yellow
-		"Planning":       "#e83e8c", // Pink
-		"Browsing":       "#6c757d", // Gray
-		"Entertainment":  "#fd7e14", // Orange
-		"General":        "#6c757d", // Gray
-		"Uncategorized":  "#dee2e6", // Light gray
-		"Idle":           "#f8f9fa", // Very light gray
+		"Development":   "#28a745", // Green
+		"Debugging":     "#dc3545", // Red
+		"Code Review":   "#17a2b8", // Cyan
+		"Learning":      "#6f42c1", // Purple
+		"Communication": "#fd7e14", // Orange
+		"Deep Work":     "#20c997", // Teal
+		"Research":      "#6c757d", // Gray
+		"Meetings":      "#007bff", // Blue
+		"Email":         "#ffc107", // Yellow
+		"Planning":      "#e83e8c", // Pink
+		"Browsing":      "#6c757d", // Gray
+		"Entertainment": "#fd7e14", // Orange
+		"General":       "#6c757d", // Gray
+		"Uncategorized": "#dee2e6", // Light gray
+		"Idle":          "#f8f9fa", // Very light gray
 	}
-	
+
 	if color, exists := colors[category]; exists {
 		return color
 	}
 	return "#6c757d" // Default gray
 }
-

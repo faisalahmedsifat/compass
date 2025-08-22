@@ -22,7 +22,7 @@ type Server struct {
 	upgrader websocket.Upgrader
 	clients  map[*websocket.Conn]bool
 	clientMu sync.RWMutex
-	
+
 	activityChan chan *types.Activity
 	server       *http.Server
 }
@@ -39,7 +39,7 @@ type Database interface {
 // NewServer creates a new web server
 func NewServer(config *types.ServerConfig, db Database, activityChan chan *types.Activity) *Server {
 	addr := fmt.Sprintf("%s:%s", config.Host, config.Port)
-	
+
 	return &Server{
 		db:           db,
 		addr:         addr,
@@ -89,7 +89,7 @@ func (s *Server) Start(ctx context.Context) error {
 	log.Printf("  GET  /api/export       - Export data")
 	log.Printf("  GET  /api/screenshot/* - Activity screenshots")
 	log.Printf("  WS   /ws               - Real-time updates")
-	
+
 	// Start server in goroutine
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -99,11 +99,11 @@ func (s *Server) Start(ctx context.Context) error {
 
 	// Wait for context cancellation
 	<-ctx.Done()
-	
+
 	// Graceful shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	return s.server.Shutdown(shutdownCtx)
 }
 
@@ -124,7 +124,7 @@ func (s *Server) handleActivities(w http.ResponseWriter, r *http.Request) {
 
 	// Parse query parameters
 	query := r.URL.Query()
-	
+
 	// Default to last 24 hours
 	to := time.Now()
 	from := to.Add(-24 * time.Hour)
@@ -158,7 +158,7 @@ func (s *Server) handleActivities(w http.ResponseWriter, r *http.Request) {
 	// Return JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	
+
 	if err := json.NewEncoder(w).Encode(activities); err != nil {
 		log.Printf("Failed to encode activities: %v", err)
 	}
@@ -191,7 +191,7 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	if err := json.NewEncoder(w).Encode(stats); err != nil {
 		log.Printf("Failed to encode stats: %v", err)
 	}
@@ -211,7 +211,7 @@ func (s *Server) handleCurrent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	if err := json.NewEncoder(w).Encode(current); err != nil {
 		log.Printf("Failed to encode current workspace: %v", err)
 	}
@@ -466,8 +466,8 @@ func (s *Server) handleCORS(w http.ResponseWriter, r *http.Request) {
 
 	// Serve API information
 	info := map[string]interface{}{
-		"name":    "Compass API",
-		"version": "1.0.0",
+		"name":        "Compass API",
+		"version":     "1.0.0",
 		"description": "Workspace tracking and analytics API",
 		"endpoints": map[string]string{
 			"/api/health":       "Server health check",
@@ -479,7 +479,7 @@ func (s *Server) handleCORS(w http.ResponseWriter, r *http.Request) {
 			"/ws":               "WebSocket for real-time updates",
 		},
 		"websocket": map[string]string{
-			"url": "ws://" + r.Host + "/ws",
+			"url":      "ws://" + r.Host + "/ws",
 			"messages": "Receives current_workspace and activity_update events",
 		},
 	}
