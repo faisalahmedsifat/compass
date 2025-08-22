@@ -13,11 +13,12 @@ import (
 
 // Default configuration values
 const (
-	DefaultInterval       = 10 * time.Second
-	DefaultPort           = "8080"
-	DefaultHost           = "localhost"
-	DefaultAutoDeleteDays = 30
-	DefaultMaxSize        = "1GB"
+	DefaultInterval          = 10 * time.Second
+	DefaultScreenshotInterval = 60 * time.Second  // Screenshots every minute by default
+	DefaultPort              = "8080"
+	DefaultHost              = "localhost"
+	DefaultAutoDeleteDays    = 30
+	DefaultMaxSize           = "1GB"
 )
 
 // Load loads configuration from file, environment, and defaults
@@ -60,6 +61,7 @@ func DefaultConfig() *types.Config {
 	return &types.Config{
 		Tracking: &types.TrackingConfig{
 			Interval:           DefaultInterval,
+			ScreenshotInterval: DefaultScreenshotInterval,
 			CaptureScreenshots: true,
 			TrackAllWindows:    true,
 		},
@@ -123,6 +125,10 @@ func Save(config *types.Config) error {
 func ValidateConfig(config *types.Config) error {
 	if config.Tracking.Interval < time.Second {
 		return fmt.Errorf("tracking interval must be at least 1 second")
+	}
+
+	if config.Tracking.ScreenshotInterval < time.Second {
+		return fmt.Errorf("screenshot interval must be at least 1 second")
 	}
 
 	if config.Privacy.AutoDeleteDays < 1 {

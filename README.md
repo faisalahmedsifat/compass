@@ -768,7 +768,8 @@ Background Apps Always Running:
 ```yaml
 # config.yaml
 tracking:
-  interval: 10s # How often to capture
+  interval: 10s # How often to capture workspace state
+  screenshot_interval: 60s # How often to take screenshots (independent of capture)
   capture_screenshots: true # Visual record
   track_all_windows: true # Not just active window
 

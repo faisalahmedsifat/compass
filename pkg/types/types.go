@@ -118,6 +118,7 @@ type Config struct {
 
 type TrackingConfig struct {
 	Interval           time.Duration `json:"interval" yaml:"interval"`
+	ScreenshotInterval time.Duration `json:"screenshot_interval" yaml:"screenshot_interval"`
 	CaptureScreenshots bool          `json:"capture_screenshots" yaml:"capture_screenshots"`
 	TrackAllWindows    bool          `json:"track_all_windows" yaml:"track_all_windows"`
 }
