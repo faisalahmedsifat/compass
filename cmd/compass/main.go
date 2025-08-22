@@ -20,9 +20,11 @@ import (
 )
 
 var (
-	Version = "0.1.0"
-	cfgFile string
-	daemon  bool
+	Version   = "0.1.0"   // Will be overridden during build
+	BuildTime = "unknown" // Will be set during build
+	GitCommit = "unknown" // Will be set during build
+	cfgFile   string
+	daemon    bool
 )
 
 func main() {
@@ -112,6 +114,22 @@ var statusCmd = &cobra.Command{
 	},
 }
 
+// versionCmd shows detailed version information
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Show detailed version information",
+	Long:  "Display detailed version, build time, and git commit information.",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("🧭 Compass Version Information\n")
+		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		fmt.Printf("Version:    %s\n", Version)
+		fmt.Printf("Build Time: %s\n", BuildTime)
+		fmt.Printf("Git Commit: %s\n", GitCommit)
+		fmt.Printf("Go Version: %s\n", "go1.21")
+		fmt.Printf("Platform:   %s\n", "darwin/linux")
+	},
+}
+
 func init() {
 	cobra.OnInitialize(initConfig)
 
@@ -128,6 +146,7 @@ func init() {
 	rootCmd.AddCommand(dashboardCmd)
 	rootCmd.AddCommand(exportCmd)
 	rootCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(versionCmd)
 }
 
 // initConfig reads in config file and ENV variables

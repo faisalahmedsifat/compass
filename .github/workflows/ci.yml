@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write # Required for creating releases and tags
+  packages: write # Required for publishing packages
+
 jobs:
   # Backend Go tests and linting
   backend-test:
@@ -131,7 +135,7 @@ jobs:
     needs: [backend-test, frontend-test]
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v5
@@ -175,27 +179,135 @@ jobs:
           npm ci
           npm run build
 
-      - name: Build backend for supported platforms
+      - name: Generate version and build info
+        id: version
         run: |
-          # Create build info
+          # Generate version based on timestamp and commit
           BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          DATE_VERSION=$(date -u +"%Y.%m.%d")
           GIT_COMMIT=$(git rev-parse --short HEAD)
 
+          # Create semantic version: YYYY.MM.DD-commit
+          VERSION="${DATE_VERSION}-${GIT_COMMIT}"
+
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "build_time=${BUILD_TIME}" >> $GITHUB_OUTPUT
+          echo "git_commit=${GIT_COMMIT}" >> $GITHUB_OUTPUT
+          echo "date_version=${DATE_VERSION}" >> $GITHUB_OUTPUT
+
+          echo "🏷️  Generated version: ${VERSION}"
+          echo "⏰  Build time: ${BUILD_TIME}"
+          echo "📝  Git commit: ${GIT_COMMIT}"
+
+      - name: Build backend for supported platforms
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BUILD_TIME="${{ steps.version.outputs.build_time }}"
+          GIT_COMMIT="${{ steps.version.outputs.git_commit }}"
+
           # Build for macOS (both Intel and Apple Silicon)
-          GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.BuildTime=$BUILD_TIME -X main.GitCommit=$GIT_COMMIT" -o compass-darwin-amd64 cmd/compass/main.go
-          GOOS=darwin GOARCH=arm64 go build -ldflags "-X main.BuildTime=$BUILD_TIME -X main.GitCommit=$GIT_COMMIT" -o compass-darwin-arm64 cmd/compass/main.go
+          GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME} -X main.GitCommit=${GIT_COMMIT}" -o compass-darwin-amd64 cmd/compass/main.go
+          GOOS=darwin GOARCH=arm64 go build -ldflags "-X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME} -X main.GitCommit=${GIT_COMMIT}" -o compass-darwin-arm64 cmd/compass/main.go
 
           # Build for Linux
-          GOOS=linux GOARCH=amd64 go build -ldflags "-X main.BuildTime=$BUILD_TIME -X main.GitCommit=$GIT_COMMIT" -o compass-linux-amd64 cmd/compass/main.go
+          GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME} -X main.GitCommit=${GIT_COMMIT}" -o compass-linux-amd64 cmd/compass/main.go
 
           # Create checksums
           sha256sum compass-* > checksums.txt
 
+          # Create version info file
+          echo "Version: ${VERSION}" > version.txt
+          echo "Build Time: ${BUILD_TIME}" >> version.txt
+          echo "Git Commit: ${GIT_COMMIT}" >> version.txt
+
+      - name: Create Git tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create and push tag
+          git tag -a "v${VERSION}" -m "Release v${VERSION}
+
+          🎉 Automated release created from main branch
+
+          📅 Build time: ${{ steps.version.outputs.build_time }}
+          📝 Commit: ${{ steps.version.outputs.git_commit }}
+
+          This release includes:
+          - macOS binaries (Intel & Apple Silicon)
+          - Linux binary (amd64)
+          - Frontend dashboard build
+          - Checksums for verification"
+
+          git push origin "v${VERSION}"
+
+          echo "✅ Created and pushed tag: v${VERSION}"
+
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: compass-binaries
+          name: compass-binaries-${{ steps.version.outputs.version }}
           path: |
             compass-*
             checksums.txt
-          retention-days: 30
+            version.txt
+          retention-days: 90
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: 🧭 Compass v${{ steps.version.outputs.version }}
+          files: |
+            compass-*
+            checksums.txt
+            version.txt
+          body: |
+            ## 🧭 Compass Release v${{ steps.version.outputs.version }}
+
+            **📅 Build Date:** ${{ steps.version.outputs.build_time }}  
+            **📝 Commit:** ${{ steps.version.outputs.git_commit }}  
+            **🌳 Branch:** main  
+
+            ### 📦 What's Included
+
+            This release contains cross-platform binaries for the Compass workspace tracker:
+
+            - **macOS Intel** (`compass-darwin-amd64`)
+            - **macOS Apple Silicon** (`compass-darwin-arm64`) 
+            - **Linux amd64** (`compass-linux-amd64`)
+            - **Frontend Dashboard** (built with React + Vite + Tailwind CSS v4)
+            - **Checksums** (`checksums.txt`) for verification
+
+            ### 🚀 Installation
+
+            1. Download the binary for your platform
+            2. Make it executable: `chmod +x compass-*`
+            3. Move to PATH: `sudo mv compass-* /usr/local/bin/compass`
+            4. Run: `compass start`
+            5. Open dashboard: http://localhost:8080
+
+            ### 🔒 Verification
+
+            Verify your download with the checksums:
+            ```bash
+            sha256sum -c checksums.txt
+            ```
+
+            ### 📊 Features
+
+            - **Real-time workspace tracking** with 10-second intervals
+            - **Modern React dashboard** with live updates
+            - **Screenshot capture** for visual activity timeline
+            - **Smart categorization** of applications and activities
+            - **Export functionality** for data analysis
+            - **Cross-platform support** (macOS & Linux)
+
+            ---
+
+            **🔄 Automatically generated** when pull requests are merged to main branch.
+          draft: false
+          prerelease: false
