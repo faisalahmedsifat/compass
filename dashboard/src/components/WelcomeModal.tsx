@@ -1,5 +1,5 @@
+import { BarChart3, Brain, Camera, Compass, X, Zap } from 'lucide-react';
 import React from 'react';
-import { X, Compass, Camera, BarChart3, Brain, Zap } from 'lucide-react';
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl max-w-4xl max-h-[90vh] overflow-auto">
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
