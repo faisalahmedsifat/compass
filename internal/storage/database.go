@@ -85,7 +85,8 @@ func (d *Database) SaveActivity(activity *types.Activity) error {
 func (d *Database) GetActivities(from, to time.Time, limit int) ([]*types.Activity, error) {
 	query := `
 		SELECT id, timestamp, app_name, window_title, process_id, is_active,
-		       focus_duration, total_windows, window_list, category, confidence
+		       focus_duration, total_windows, window_list, category, confidence,
+		       CASE WHEN screenshot IS NOT NULL THEN 1 ELSE 0 END as has_screenshot
 		FROM activities
 		WHERE timestamp BETWEEN ? AND ?
 		ORDER BY timestamp DESC
@@ -103,6 +104,7 @@ func (d *Database) GetActivities(from, to time.Time, limit int) ([]*types.Activi
 	for rows.Next() {
 		activity := &types.Activity{}
 		var windowsJSON string
+		var hasScreenshot int
 
 		err := rows.Scan(
 			&activity.ID,
@@ -116,10 +118,14 @@ func (d *Database) GetActivities(from, to time.Time, limit int) ([]*types.Activi
 			&windowsJSON,
 			&activity.Category,
 			&activity.Confidence,
+			&hasScreenshot,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan activity: %w", err)
 		}
+
+		// Set screenshot flag
+		activity.HasScreenshot = hasScreenshot == 1
 
 		// Deserialize windows
 		if err := json.Unmarshal([]byte(windowsJSON), &activity.AllWindows); err != nil {
@@ -149,9 +155,18 @@ func (d *Database) GetCurrentWorkspace() (*types.CurrentWorkspace, error) {
 	err := d.db.QueryRow(query).Scan(&appName, &windowTitle, &windowsJSON, &category, &timestamp, &focusDuration)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			// Return empty workspace with helpful message
 			return &types.CurrentWorkspace{
-				WindowCount: 0,
-				Timestamp:   time.Now(),
+				ActiveWindow: types.Window{
+					AppName: "No Activity",
+					Title:   "Compass is tracking but no activities recorded yet. Please wait a moment...",
+				},
+				AllWindows:      []types.Window{},
+				WindowCount:     0,
+				Category:        "Initializing",
+				FocusTime:       "0s",
+				ContextSwitches: 0,
+				Timestamp:       time.Now(),
 			}, nil
 		}
 		return nil, fmt.Errorf("failed to get current workspace: %w", err)
@@ -280,6 +295,22 @@ func (d *Database) GetStats(period string, date time.Time) (*types.Stats, error)
 	stats.Patterns, _ = d.getPatterns(from, to)
 
 	return stats, nil
+}
+
+// GetScreenshot retrieves a screenshot by activity ID
+func (d *Database) GetScreenshot(activityID int64) ([]byte, error) {
+	query := `SELECT screenshot FROM activities WHERE id = ? AND screenshot IS NOT NULL`
+	
+	var screenshot []byte
+	err := d.db.QueryRow(query, activityID).Scan(&screenshot)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no screenshot found for activity %d", activityID)
+		}
+		return nil, fmt.Errorf("failed to get screenshot: %w", err)
+	}
+	
+	return screenshot, nil
 }
 
 // getContextSwitches counts context switches in a time period

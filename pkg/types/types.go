@@ -38,6 +38,7 @@ type Activity struct {
 	Category      string    `json:"category"`
 	Confidence    float64   `json:"confidence"`
 	Screenshot    []byte    `json:"-"` // Don't serialize screenshots in API
+	HasScreenshot bool      `json:"has_screenshot"` // Indicate if screenshot exists
 }
 
 // WorkspaceSnapshot represents complete workspace state at a point in time
