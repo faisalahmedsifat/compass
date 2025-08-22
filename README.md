@@ -44,6 +44,8 @@ Tracks your entire digital workspace in real-time: all windows, applications, an
 
 ## ⚡ **Quick Start (60 seconds)**
 
+> **⚠️ Platform Support**: Compass currently works on **Linux** and **macOS** only. Windows support is not available at this time.
+
 ### **🎯 For Users (Just Want to Track):**
 
 ```bash
@@ -54,8 +56,9 @@ cd compass && make build
 # 2. Start the tracking daemon
 ./compass start
 
-# 3. Run the Frontend (optional)
-cd dashboard && npm install && npm run build && npm start
+# 3. Run the Frontend Dashboard
+cd dashboard && npm install && npm run build && npm run dev
+# Then open: http://localhost:5173
 ```
 
 ### **🚀 For Developers (Full Experience):**

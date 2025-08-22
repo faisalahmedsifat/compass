@@ -1,0 +1,70 @@
+version: 2
+updates:
+  # Go modules
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 5
+    assignees:
+      - "faisalahmedsifat"
+    commit-message:
+      prefix: "deps(go)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "go"
+    
+  # npm for dashboard
+  - package-ecosystem: "npm"
+    directory: "/dashboard"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 10
+    assignees:
+      - "faisalahmedsifat"
+    commit-message:
+      prefix: "deps(npm)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "frontend"
+    # Group minor and patch updates
+    groups:
+      react-updates:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      vite-updates:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+      tailwind-updates:
+        patterns:
+          - "tailwind*"
+          - "@tailwindcss/*"
+    # Ignore certain packages that might cause issues
+    ignore:
+      - dependency-name: "@types/node"
+        versions: [">= 18.a", "< 19"]
+    
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "04:00"
+    open-pull-requests-limit: 5
+    assignees:
+      - "faisalahmedsifat"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"

@@ -5,8 +5,67 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+  
 jobs:
+  # Run tests before release
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Run tests
+      run: go test -v ./...
+    
+    - name: Build and test
+      run: go build -o compass cmd/compass/main.go
+
+  # Test frontend
+  frontend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./dashboard
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: dashboard/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linting and build
+      run: |
+        npm run lint
+        npm run build
+
+  # Build release binaries
   build:
+    needs: [test, frontend-test]
     runs-on: ubuntu-latest
     
     steps:
@@ -17,62 +76,135 @@ jobs:
       with:
         go-version: '1.21'
     
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: dashboard/package-lock.json
+    
     - name: Get version
       id: version
       run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
     
-    - name: Build binaries
+    - name: Build frontend
+      run: |
+        cd dashboard
+        npm ci
+        npm run build
+        echo "Frontend build completed"
+    
+    - name: Build binaries for supported platforms
       run: |
         mkdir -p dist
         
-        # Build for different platforms
-        GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/compass-${{ steps.version.outputs.VERSION }}-darwin-amd64 cmd/compass/main.go
-        GOOS=darwin GOARCH=arm64 go build -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/compass-${{ steps.version.outputs.VERSION }}-darwin-arm64 cmd/compass/main.go
-        GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/compass-${{ steps.version.outputs.VERSION }}-linux-amd64 cmd/compass/main.go
-        GOOS=windows GOARCH=amd64 go build -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}" -o dist/compass-${{ steps.version.outputs.VERSION }}-windows-amd64.exe cmd/compass/main.go
+        # Build metadata
+        BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        GIT_COMMIT=$(git rev-parse --short HEAD)
+        VERSION=${{ steps.version.outputs.VERSION }}
+        
+        echo "Building Compass $VERSION"
+        echo "Build time: $BUILD_TIME"
+        echo "Git commit: $GIT_COMMIT"
+        
+        # Build for supported platforms only (Linux and macOS)
+        echo "Building for macOS (Apple Silicon)..."
+        GOOS=darwin GOARCH=arm64 go build \
+          -ldflags "-X main.Version=$VERSION -X main.BuildTime=$BUILD_TIME -X main.GitCommit=$GIT_COMMIT" \
+          -o dist/compass-$VERSION-darwin-arm64 cmd/compass/main.go
+        
+        echo "Building for macOS (Intel)..."
+        GOOS=darwin GOARCH=amd64 go build \
+          -ldflags "-X main.Version=$VERSION -X main.BuildTime=$BUILD_TIME -X main.GitCommit=$GIT_COMMIT" \
+          -o dist/compass-$VERSION-darwin-amd64 cmd/compass/main.go
+        
+        echo "Building for Linux..."
+        GOOS=linux GOARCH=amd64 go build \
+          -ldflags "-X main.Version=$VERSION -X main.BuildTime=$BUILD_TIME -X main.GitCommit=$GIT_COMMIT" \
+          -o dist/compass-$VERSION-linux-amd64 cmd/compass/main.go
         
         # Create checksums
         cd dist
         sha256sum * > checksums.txt
+        echo "Created checksums:"
+        cat checksums.txt
     
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
           dist/*
         body: |
           ## 🧭 Compass ${{ steps.version.outputs.VERSION }}
           
-          A lightweight CLI tool that tracks your complete digital workspace.
+          A lightweight CLI tool that tracks your complete digital workspace with an advanced React dashboard.
           
           ### 📦 Downloads
           
-          - **macOS (Apple Silicon)**: `compass-${{ steps.version.outputs.VERSION }}-darwin-arm64`
+          Choose the right binary for your platform:
+          
+          - **macOS (Apple Silicon M1/M2/M3)**: `compass-${{ steps.version.outputs.VERSION }}-darwin-arm64`
           - **macOS (Intel)**: `compass-${{ steps.version.outputs.VERSION }}-darwin-amd64`  
-          - **Linux**: `compass-${{ steps.version.outputs.VERSION }}-linux-amd64`
-          - **Windows**: `compass-${{ steps.version.outputs.VERSION }}-windows-amd64.exe`
+          - **Linux (x64)**: `compass-${{ steps.version.outputs.VERSION }}-linux-amd64`
+          
+          > **Note**: Windows is not currently supported. This tool works on Linux and macOS only.
           
           ### 🚀 Quick Start
           
           ```bash
-          # Download for your platform
-          chmod +x compass-*
-          ./compass-* start
+          # Download and extract for your platform
+          wget https://github.com/faisalahmedsifat/compass/releases/download/${{ steps.version.outputs.VERSION }}/compass-${{ steps.version.outputs.VERSION }}-linux-amd64
+          chmod +x compass-${{ steps.version.outputs.VERSION }}-linux-amd64
           
-          # Open dashboard
+          # Start tracking
+          ./compass-${{ steps.version.outputs.VERSION }}-linux-amd64 start
+          
+          # Open the advanced dashboard
           open http://localhost:8080
           ```
           
-          ### 📊 Features
+          ### ✨ New Features in this Release
+          
+          - 📊 **Advanced Analytics Dashboard** - Timeline view, focus patterns, app efficiency radar
+          - 🤖 **AI-Powered Insights** - Smart productivity recommendations
+          - 📅 **Google Calendar-like Timeline** - Hour/day/week/month views
+          - 🎯 **Real-time Flow State Tracking** - Live productivity monitoring
+          - 📸 **Screenshot Integration** - Visual context for activities
+          - 🔄 **App Transition Analysis** - Context switching insights
+          - 💪 **Energy-Productivity Correlation** - Understand your peak hours
+          
+          ### 📊 Core Features
           
           - Complete window tracking (active + background)
-          - Real-time categorization
-          - Local web dashboard
-          - Privacy controls
-          - SQLite storage
-          - WebSocket updates
+          - Real-time categorization and focus measurement
+          - Advanced React dashboard with multiple views
+          - Privacy-first design (all data stays local)
+          - SQLite storage with WebSocket real-time updates
+          - Cross-platform support (Linux & macOS)
           
-          See [README.md](https://github.com/faisalahmedsifat/compass#readme) for full documentation.
+          ### 🔧 Developer Experience
+          
+          - Automated development setup with `./dev-setup.sh`
+          - Hot-reload development with `make dev-start`
+          - Comprehensive testing with `make dev-test`
+          - Docker support for containerized development
+          
+          ### 📚 Documentation
+          
+          - [README.md](https://github.com/faisalahmedsifat/compass#readme) - Complete setup guide
+          - [CONTRIBUTING.md](https://github.com/faisalahmedsifat/compass/blob/main/CONTRIBUTING.md) - Developer guide
+          - [API Documentation](https://github.com/faisalahmedsifat/compass#api-endpoints) - Backend API reference
+          
+          ### 🔐 Security & Privacy
+          
+          - All tracking data remains on your device
+          - No telemetry or external data transmission
+          - Open source and auditable
+          - Configurable privacy controls
+          
+          ---
+          
+          **Full Changelog**: [View Changes](https://github.com/faisalahmedsifat/compass/compare/v0.1.0...${{ steps.version.outputs.VERSION }})
         draft: false
         prerelease: false
       env:
