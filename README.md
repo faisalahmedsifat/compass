@@ -1,8 +1,16 @@
 # 🧭 Compass
 
-> **A lightweight CLI tool that sees your complete workspace - every window, every app, every context.**
+> **A comprehensive workspace intelligence platform that sees your complete digital environment.**
 
-Tracks your entire digital workspace in real-time: all 15 windows across VS Code, Chrome with 47 tabs, Terminal, Slack, Spotify, and everything else. Get insights through a beautiful local dashboard.
+Tracks your entire digital workspace in real-time: all windows, applications, and context across your desktop. Features an advanced React dashboard with Timeline views, AI-powered insights, productivity analytics, and real-time monitoring.
+
+## 🌟 **What's New: Advanced Dashboard**
+
+🎯 **Timeline View** - Google Calendar-like interface showing activity patterns by hour/day/week/month  
+📊 **Advanced Analytics** - Focus heatmaps, app efficiency radar, energy correlations  
+🧠 **AI Insights** - Personalized productivity recommendations and pattern analysis  
+📸 **Screenshot Gallery** - Visual context of your work sessions  
+⚡ **Real-time Updates** - Live flow state monitoring and WebSocket connectivity
 
 ---
 
@@ -34,21 +42,45 @@ Tracks your entire digital workspace in real-time: all 15 windows across VS Code
 
 ---
 
-## ⚡ **Quick Start (30 seconds)**
+## ⚡ **Quick Start (60 seconds)**
 
+### **🎯 For Users (Just Want to Track):**
 ```bash
-# 1. Clone and build
+# 1. Clone and build backend
 git clone https://github.com/faisalahmedsifat/compass.git
 cd compass && make build
 
-# 2. Start tracking  
+# 2. Start the tracking daemon
 ./compass start
 
-# 3. View your workspace
-open http://localhost:8080
+# 3. Run the Frontend (optional)
+cd dashboard && npm install && npm run build && npm start
 ```
 
-**That's it!** Compass is now tracking every window on your Mac.
+### **🚀 For Developers (Full Experience):**
+```bash
+# 🎯 One-Command Setup (Recommended)
+git clone https://github.com/faisalahmedsifat/compass.git
+cd compass && ./dev-setup.sh && ./dev-start.sh
+
+# 📊 Access dashboards
+open http://localhost:5174    # Advanced React dashboard
+open http://localhost:8080    # Basic API interface
+```
+
+### **⚡ Manual Setup (Alternative):**
+```bash
+# 1. Start backend (Terminal 1)
+cd compass && make build && ./compass start
+
+# 2. Start advanced dashboard (Terminal 2)  
+cd dashboard && npm install && npm run dev
+
+# 3. Access advanced dashboard
+open http://localhost:5174
+```
+
+**That's it!** You now have the complete Compass experience with advanced analytics.
 
 ### 🔗 **Need Help?**
 - 🐛 **Found a bug?** → [Report it here](https://github.com/faisalahmedsifat/compass/issues/new?template=bug_report.md)
@@ -69,39 +101,58 @@ open http://localhost:8080
 - ✅ **Privacy filtering** (sensitive apps/titles excluded)
 - ✅ **SQLite data storage** (local, encrypted, exportable)
 - ✅ **Tested on macOS** (accessibility permissions working)
+- ✅ **Tested on Linux (PopOS!)
 
-## System Overview
+## 🏗️ **System Architecture**
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     User's Computer                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌──────────────┐        ┌──────────────────────────┐      │
-│  │   Terminal   │        │      Web Browser         │      │
-│  │              │        │                          │      │
-│  │ $ compass    │        │  http://localhost:8080   │      │
-│  │   start      │◄───────┤  (Dashboard View)        │      │
-│  └──────┬───────┘        └──────────▲───────────────┘      │
-│         │                           │                       │
-│         │                           │                       │
-│  ┌──────▼───────────────────────────┴────────────┐         │
-│  │          Compass Core (Single Binary)          │         │
-│  ├────────────────────────────────────────────────┤         │
-│  │                                                │         │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐   │         │
-│  │  │ Capture  │  │  Process │  │   Web    │   │         │
-│  │  │  Engine  │──►│  Engine  │──►│  Server  │   │         │
-│  │  └────┬─────┘  └────┬─────┘  └────▲─────┘   │         │
-│  │       │             │              │          │         │
-│  │       ▼             ▼              │          │         │
-│  │  ┌─────────────────────────────────┴───┐     │         │
-│  │  │         SQLite Database              │     │         │
-│  │  │  (./compass.db - local file)         │     │         │
-│  │  └──────────────────────────────────────┘     │         │
-│  └────────────────────────────────────────────────┘         │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           User's Computer                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────┐    ┌──────────────────────┐    ┌─────────────────────────┐│
+│  │  Terminal   │    │    Web Browser       │    │    Advanced Dashboard   ││
+│  │             │    │                      │    │                         ││
+│  │ $ compass   │    │ http://localhost:8080│    │ http://localhost:5174   ││
+│  │   start     │    │  (Basic API View)    │    │  (React Dashboard)      ││
+│  └─────┬───────┘    └───────────▲──────────┘    └─────────────▲───────────┘│
+│        │                        │                            │             │
+│        │                        │                            │             │
+│  ┌─────▼────────────────────────────────────────────────────────────────┐  │
+│  │                     Compass Backend (Go)                             │  │
+│  ├──────────────────────────────────────────────────────────────────────┤  │
+│  │                                                                      │  │
+│  │ ┌──────────┐  ┌──────────┐  ┌─────────────┐  ┌─────────────────────┐│  │
+│  │ │ Capture  │  │ Process  │  │ REST API    │  │ WebSocket Server    ││  │
+│  │ │ Engine   │──► Engine   │──► Server      │  │ (Real-time Updates) ││  │
+│  │ │(macOS/Win│  │(Rules/AI)│  │(:8080)      │  │                     ││  │
+│  │ │/Linux)   │  │          │  │             │  │                     ││  │
+│  │ └────┬─────┘  └────┬─────┘  └─────▲───────┘  └─────────▲───────────┘│  │
+│  │      │             │              │                    │             │  │
+│  │      ▼             ▼              │                    │             │  │
+│  │ ┌──────────────────────────────────┴────────────────────┴─────────┐  │  │
+│  │ │                    SQLite Database                              │  │  │
+│  │ │        • Activities • Screenshots • Stats • Analytics          │  │  │
+│  │ │               (./compass.db - encrypted, local)                 │  │  │
+│  │ └─────────────────────────────────────────────────────────────────┘  │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────────┤
+│  │                     Frontend Dashboard (React)                          │
+│  ├─────────────────────────────────────────────────────────────────────────┤
+│  │                                                                          │
+│  │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐│
+│  │ │  Overview   │ │  Timeline   │ │ Analytics   │ │     AI Insights     ││
+│  │ │   • Real-   │ │  • Hour/Day │ │ • Heatmaps  │ │ • Recommendations   ││
+│  │ │     time    │ │  • Week/Mon │ │ • Radar     │ │ • Pattern Analysis  ││
+│  │ │   • Flow    │ │  • Calendar │ │ • Scatter   │ │ • Productivity      ││
+│  │ │     State   │ │     View    │ │   Plots     │ │     Optimization    ││
+│  │ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────────────┘│
+│  │                                                                          │
+│  │      Built with: React + TypeScript + Tailwind + Vite + TanStack        │
+│  └─────────────────────────────────────────────────────────────────────────┘
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 
@@ -134,6 +185,158 @@ open http://localhost:8080
 - ✅ **Smart categorization** (Development, Communication)
 - ✅ **Privacy filtering** working
 - ✅ **Real-time dashboard** updates
+
+---
+
+## 🎨 **Advanced Dashboard Features**
+
+### **📅 Timeline View - Google Calendar for Productivity**
+```
+Hour View    │ 09:00  09:05  09:10  09:15  09:20  09:25  ...
+            │ [💻]   [💻]   [🌐]   [🌐]   [💻]   [💻]   
+            │ Cursor Cursor Chrome Chrome Cursor Cursor
+            │ 15m    12m    8m     10m    18m    14m
+
+Day View     │ 06:00  07:00  08:00  09:00  10:00  11:00  ...
+            │ [☕]   [📧]   [💻]   [💻]   [💻]   [🌐]   
+            │ Break  Email  Cursor Cursor Cursor Chrome
+            │ 0m     25m    45m    58m    52m    35m
+
+Week View    │ Sun    Mon    Tue    Wed    Thu    Fri    Sat
+            │ [📱]   [💻]   [💻]   [💻]   [💻]   [💻]   [🎮]
+            │ Light  Heavy  Heavy  Peak   Heavy  Med    Fun
+            │ 2.5h   6.2h   7.1h   8.3h   6.8h   4.2h   1.5h
+```
+
+**Interactive Features:**
+- 🖱️ **Hover for Details** - See exact app breakdowns and productivity scores
+- 🎯 **Click to Drill Down** - Navigate from month → week → day → hour
+- 🎨 **Color Coding** - Intensity-based visualization (red = low focus, green = high focus)
+- 📊 **Multi-Granularity** - Switch between 5-minute intervals to monthly patterns
+
+### **📊 Advanced Analytics**
+
+#### **🔥 Focus Heatmap**
+```
+        Mon  Tue  Wed  Thu  Fri  Sat  Sun
+06:00   ██   ██   ██   ██   ██   ░░   ░░   
+08:00   ███  ███  ███  ███  ███  ██   ░░   
+10:00   ████ ████ ████ ████ ████ ███  ██   
+12:00   ██   ██   ██   ██   ██   ██   ██   
+14:00   ████ ████ ████ ████ ████ ███  ██   
+16:00   ███  ███  ███  ███  ███  ██   ░░   
+18:00   ██   ██   ██   ██   ██   ░░   ░░   
+```
+- **Peak Hours:** Automatically identify your most productive times
+- **Energy Patterns:** Understand your natural rhythm
+- **Weekly Trends:** Spot productivity patterns across days
+
+#### **📡 App Efficiency Radar**
+```
+         Productivity
+              ▲
+              │
+         ████ │ ████  
+    Time ◄────┼────► Focus
+         ████ │ ████
+              │
+              ▼
+          Efficiency
+```
+- **Multi-Dimensional Analysis** - Time spent vs productivity vs focus quality
+- **App Comparisons** - Which tools make you most productive
+- **Context Switching Impact** - Visual representation of distraction costs
+
+#### **⚡ Energy-Productivity Correlation**
+```
+Productivity ▲
+           █ │
+           █ │ █     
+           █ │ █ █   Peak Performance Zone
+           █ │ █ █ █ 
+         ████│█████ 
+         ────┼───────► Energy Level
+             │
+```
+- **Sweet Spot Detection** - Find your optimal energy-productivity correlation
+- **Burnout Prevention** - Identify when pushing harder reduces output
+- **Work-Life Balance** - Visual feedback on sustainable productivity
+
+### **🧠 AI-Powered Insights**
+
+#### **📝 Personalized Recommendations**
+```
+🎯 OPTIMIZATION OPPORTUNITIES
+
+1. 🕒 Peak Performance
+   Your best work happens 10:00-11:30 AM
+   → Schedule complex tasks during this window
+
+2. 🔄 Context Switching  
+   You switch apps 23 times/hour during 2-4 PM
+   → Consider time-blocking for deep work
+
+3. 🎵 Environment
+   Spotify + VS Code = 40% longer focus sessions
+   → Maintain background music for coding
+
+4. 📱 Distraction Patterns
+   Slack checks spike before lunch meetings
+   → Use notification batching
+```
+
+#### **📈 Productivity Insights**
+- **Pattern Recognition** - Automatically detect your work habits
+- **Efficiency Scoring** - Rate your productivity across different activities  
+- **Behavioral Triggers** - Understand what leads to flow states
+- **Goal Tracking** - Monitor progress toward productivity targets
+
+### **📸 Screenshot Gallery & Context**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Visual Timeline - See What You Actually Worked On             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  [09:15] [09:30] [09:45] [10:00] [10:15] [10:30] [10:45]      │
+│   📸     📸     📸     📸     📸     📸     📸              │
+│  React   API    Debug  Deploy Tests  Review Notes             │
+│  Component      Error         Pass   PR                       │
+│                                                                 │
+│  Click any screenshot to see full context and related apps     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Privacy-First Design:**
+- 🔒 **Local Storage** - Screenshots never leave your machine
+- 🎭 **Smart Blurring** - Sensitive content automatically obscured
+- 🗑️ **Auto-Cleanup** - Configurable retention periods
+- 🚫 **Exclude Apps** - Never capture from specified applications
+
+### **⚡ Real-Time Monitoring**
+
+#### **🌊 Flow State Indicator**
+```
+┌─────────────────────────────────────┐
+│          CURRENT FLOW STATE         │
+├─────────────────────────────────────┤
+│                                     │
+│    🟢 DEEP FOCUS                   │
+│    ████████████████████░░░  85%     │
+│                                     │
+│    💻 VS Code • 23m 15s            │
+│    🎯 No distractions detected      │
+│    ⚡ High productivity zone        │
+│                                     │
+│    Next break recommended: 7m       │
+└─────────────────────────────────────┘
+```
+
+#### **📊 Live Metrics Dashboard**
+- **Focus Quality** - Real-time assessment of concentration level
+- **Productivity Score** - Current session efficiency rating
+- **Context Switches** - Live count of app/window changes
+- **Session Duration** - Time in current activity
+- **Energy Level** - Estimated based on activity patterns
 
 ---
 
@@ -319,51 +522,92 @@ Browser:
 └────────────────────────────────────────────────┘
 ```
 
-## 🛠 Installation & Quick Start
+## 🛠 **Installation & Development Setup**
 
-### Method 1: Direct Build (Recommended - 2 minutes)
+### **📊 Full Experience (Backend + Advanced Dashboard)**
 
+#### **🎯 Automatic Setup (Recommended)**
 ```bash
-# Clone the repository
+# One command does everything!
+git clone https://github.com/faisalahmedsifat/compass.git
+cd compass
+./dev-setup.sh              # Sets up everything automatically
+
+# Start development environment
+./dev-start.sh               # Starts both backend and frontend
+
+# Access dashboards
+open http://localhost:5174   # Advanced React dashboard
+open http://localhost:8080   # Basic API interface
+```
+
+#### **🛠️ Manual Setup (For Learning)**
+```bash
+# 1. Clone and setup
 git clone https://github.com/faisalahmedsifat/compass.git
 cd compass
 
-# Install dependencies and build
-make deps
-make build
+# 2. Backend Setup (Go)
+make deps                    # Install Go dependencies
+make build                   # Build compass binary
 
-# Start tracking your workspace
-./compass start
+# 3. Frontend Setup (Node.js/React)
+cd dashboard
+npm install                  # Install React dependencies
+cd ..
 
-# Open dashboard in browser (automatic)
-# Visit: http://localhost:8080
+# 4. Start both services
+# Terminal 1: Backend
+./compass start              # Starts API server on :8080
+
+# Terminal 2: Frontend  
+cd dashboard && npm run dev  # Starts React dev server on :5174
+
+# 5. Access the dashboard
+open http://localhost:5174   # Advanced React dashboard
+open http://localhost:8080   # Basic API interface
 ```
 
-### Method 2: Install Script
+### **⚡ Quick Setup (Backend Only)**
+
 ```bash
-# One-command installation
-curl -sSL https://raw.githubusercontent.com/faisalahmedsifat/compass/main/install.sh | bash
-
-# Or download and inspect first:
-wget https://raw.githubusercontent.com/faisalahmedsifat/compass/main/install.sh
-bash install.sh
+# For basic functionality without advanced dashboard
+git clone https://github.com/faisalahmedsifat/compass.git
+cd compass && make build && ./compass start
+open http://localhost:8080
 ```
 
-### Method 3: Manual Installation
+### **🐳 Docker Setup (Coming Soon)**
+
 ```bash
-# Build for your platform
-make build                 # Local build
-make build-all            # All platforms  
-make install              # Install to /usr/local/bin
-
-# Start using Compass
-compass start             # If installed globally
+# Full stack with one command
+docker-compose up -d
+open http://localhost:5174
 ```
 
-### ✅ **Verified Working On:**
-- ✅ **macOS** (Intel & Apple Silicon) - Fully tested
-- ⏳ **Linux** (planned) 
-- ⏳ **Windows** (planned)
+### **📦 Production Deployment**
+
+```bash
+# Build optimized dashboard
+cd dashboard && npm run build
+
+# Build production binary
+make build-prod
+
+# Deploy single binary + static assets
+./compass start --prod
+```
+
+### ✅ **Platform Support:**
+- ✅ **macOS** (Intel & Apple Silicon) - Fully tested with accessibility permissions
+- ⏳ **Linux** (X11/Wayland support in progress)
+- ⏳ **Windows** (Win32 API implementation planned)
+
+### 🛠️ **Prerequisites:**
+- **Backend:** Go 1.21+, Make, SQLite
+- **Frontend:** Node.js 18+, npm/yarn
+- **Development:** Git, Terminal/Command Prompt
+- **macOS:** Accessibility permissions for window tracking
 
 ### CLI Usage
 
@@ -555,18 +799,90 @@ storage:
 - [ ] Team sharing (optional)
 - [ ] IDE/Browser plugins
 
-## 💻 Technical Architecture
+## 💻 **Technical Stack & Architecture**
 
-### Simple CLI Design
+### **🏗️ Full-Stack Design**
 ```
-compass (CLI binary)
-├── Runs in terminal or background
-├── Captures workspace every 10 seconds
-├── Stores data in local SQLite
-└── Serves dashboard on :8080
+┌─────────────────────────────────────────────────────────────────┐
+│                        COMPASS PLATFORM                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Backend (Go)              Frontend (React)                     │
+│  ├── CLI Binary            ├── Advanced Dashboard               │
+│  ├── REST API (:8080)      ├── Real-time Updates               │
+│  ├── WebSocket Server      ├── Timeline Views                  │
+│  ├── Window Capture        ├── Analytics Charts                │
+│  ├── Smart Categorizer     ├── AI Insights                     │
+│  └── SQLite Database       └── Screenshot Gallery              │
+│                                                                 │
+│  Technologies:             Technologies:                        │
+│  • Go 1.21+               • React 18                           │
+│  • Gin Web Framework      • TypeScript                         │
+│  • GORM (ORM)             • Tailwind CSS                       │
+│  • SQLite                 • Vite (Build Tool)                  │
+│  • WebSockets             • TanStack Query                     │
+│  • AppleScript (macOS)    • Recharts (Charts)                 │
+│                           • Lucide Icons                       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-No desktop app, no system tray, no complex UI
-Just a CLI tool + web dashboard
+### **📁 Project Structure**
+```
+compass/
+├── 📁 Backend (Go)
+│   ├── cmd/compass/main.go           # CLI entry point
+│   ├── internal/
+│   │   ├── capture/                  # Platform-specific window tracking
+│   │   │   ├── engine.go             # Capture orchestration
+│   │   │   ├── platform_darwin.go   # macOS (AppleScript + Accessibility)
+│   │   │   ├── platform_linux.go    # Linux (X11/Wayland) [WIP]
+│   │   │   └── platform_windows.go  # Windows (Win32 API) [Planned]
+│   │   ├── processor/                # Data processing & intelligence
+│   │   │   └── categorizer.go        # Smart activity categorization
+│   │   ├── storage/                  # Data persistence layer
+│   │   │   ├── database.go           # SQLite interface & queries
+│   │   │   └── migrations.go         # Schema management
+│   │   ├── server/                   # Web server & API
+│   │   │   ├── server.go             # HTTP/WebSocket server
+│   │   │   └── handlers.go           # API endpoints
+│   │   └── config/                   # Configuration management
+│   │       └── config.go             # Settings & privacy controls
+│   ├── pkg/types/                    # Shared type definitions
+│   │   └── types.go                  # Core data structures
+│   ├── Makefile                      # Build automation
+│   └── go.mod                        # Go dependencies
+│
+├── 📁 Frontend (React)
+│   ├── dashboard/
+│   │   ├── src/
+│   │   │   ├── components/           # React components
+│   │   │   │   ├── Dashboard.tsx     # Main dashboard controller
+│   │   │   │   ├── TimelineView.tsx  # Google Calendar-like timeline
+│   │   │   │   ├── FocusHeatmap.tsx  # Productivity heatmap
+│   │   │   │   ├── AppEfficiencyRadar.tsx # App performance radar
+│   │   │   │   ├── FlowStateIndicator.tsx # Real-time focus state
+│   │   │   │   ├── ProductivityInsights.tsx # AI recommendations
+│   │   │   │   └── ScreenshotGallery.tsx # Visual activity timeline
+│   │   │   ├── hooks/                # Custom React hooks
+│   │   │   │   └── useCompassApi.ts  # API integration & data fetching
+│   │   │   ├── types/                # TypeScript definitions
+│   │   │   │   └── index.ts          # Frontend data models
+│   │   │   └── utils/                # Helper functions
+│   │   ├── package.json              # Node.js dependencies
+│   │   ├── tailwind.config.js        # Tailwind CSS configuration
+│   │   ├── vite.config.ts            # Vite build configuration
+│   │   └── tsconfig.json             # TypeScript configuration
+│
+├── 📁 Documentation
+│   ├── README.md                     # This file
+│   ├── CONTRIBUTING.md               # Contribution guidelines
+│   └── docs/                         # Additional documentation
+│
+└── 📁 Configuration
+    ├── config.yaml.example           # Example configuration
+    ├── install.sh                    # Installation script
+    └── docker-compose.yml            # Container orchestration [Planned]
 ```
 
 ### Window Tracking Method
@@ -600,36 +916,62 @@ func CategorizeActivity(windows []WindowInfo) string {
 }
 ```
 
-## 🚀 Quick Start Guide
+## 🚀 **Quick Start Guide**
 
-1. **Build the CLI** (30 seconds)
+### **🎯 For Users (Just Want to Track)**
+1. **Clone and build** (30 seconds)
    ```bash
    git clone https://github.com/faisalahmedsifat/compass.git
-   cd compass && go build -o compass
+   cd compass && make build
    ```
 
-2. **Start tracking** (in terminal)
+2. **Start tracking**
    ```bash
-   ./compass start
-   # Or run in background: ./compass start --daemon
+   ./compass start              # Foreground mode
+   # Or: ./compass daemon       # Background mode
    ```
 
-3. **Open Dashboard** (in browser)
-   - Visit http://localhost:8080
-   - See your complete workspace
-   - Watch patterns emerge
-
-4. **Stop tracking**
+3. **View your workspace**
    ```bash
-   # If running in foreground: Ctrl+C
-   # If running as daemon: ./compass stop
+   open http://localhost:8080   # Basic dashboard
+   ./compass stats              # Terminal summary
    ```
 
-5. **Check your stats**
+### **🚀 For Developers (Full Experience)**
+1. **Complete setup** (60 seconds)
    ```bash
-   ./compass stats  # Quick terminal summary
-   ./compass export  # Export your data
+   git clone https://github.com/faisalahmedsifat/compass.git
+   cd compass && ./dev-setup.sh
    ```
+
+2. **Start development environment**
+   ```bash
+   ./dev-start.sh               # Starts both backend and frontend
+   # Or: make dev-start          # Alternative command
+   ```
+
+3. **Access advanced dashboard**
+   ```bash
+   open http://localhost:5174   # Advanced React dashboard
+   open http://localhost:8080   # Backend API
+   ```
+
+4. **Development commands**
+   ```bash
+   ./dev-test.sh                # Run all tests
+   make dev-check               # Health check
+   make lint                    # Code linting
+   ```
+
+### **🛠️ Make Commands**
+```bash
+make help                      # Show all available commands
+make dev-setup                 # Setup development environment
+make dev-start                 # Start both services
+make dev-test                  # Run comprehensive tests
+make build                     # Build backend only
+make build-frontend            # Build frontend only
+```
 
 ## 📊 **Live Example Output (Real Data)**
 
@@ -859,34 +1201,44 @@ Check the [roadmap](#🗺-roadmap) below and submit GitHub issues for:
 - Integration requests
 - Platform support
 
-## 🗺 **Updated Roadmap**
+## 🗺 **Development Roadmap**
 
-### ✅ **Phase 1: MVP (COMPLETED!)**
-- ✅ Complete window tracking (macOS)
-- ✅ Real-time categorization  
-- ✅ Local SQLite storage
-- ✅ REST API + WebSocket
-- ✅ Web dashboard
-- ✅ Privacy controls
-- ✅ CLI commands
+### ✅ **Phase 1: Core Platform (COMPLETED!)**
+- ✅ Complete window tracking (macOS with accessibility permissions)
+- ✅ Real-time categorization and smart pattern detection
+- ✅ Local SQLite storage with privacy controls
+- ✅ REST API + WebSocket for real-time updates
+- ✅ Basic web dashboard for API testing
+- ✅ CLI commands and configuration management
 
-### 🚧 **Phase 2: Cross-Platform (In Progress)**
-- ⏳ Linux window tracking
-- ⏳ Windows window tracking  
-- ⏳ Browser extension (tab tracking)
-- ⏳ Performance optimizations
+### ✅ **Phase 2: Advanced Dashboard (COMPLETED!)**
+- ✅ **React/TypeScript frontend** with modern UI
+- ✅ **Timeline View** - Google Calendar-like interface (hour/day/week/month)
+- ✅ **Advanced Analytics** - Focus heatmaps, app efficiency radar, energy correlations
+- ✅ **AI-Powered Insights** - Personalized productivity recommendations
+- ✅ **Screenshot Gallery** - Visual context with privacy controls
+- ✅ **Real-time Monitoring** - Live flow state and productivity indicators
+- ✅ **Responsive Design** - Mobile-friendly interface
 
-### 🔮 **Phase 3: Intelligence (Future)**
-- ⏳ Local AI summaries (Ollama)
-- ⏳ Pattern recognition
-- ⏳ Productivity insights
-- ⏳ Team features (optional)
+### 🚧 **Phase 3: Cross-Platform Expansion (In Progress)**
+- ⏳ **Linux Support** - X11/Wayland window tracking implementation
+- ⏳ **Windows Support** - Win32 API integration for window management
+- ⏳ **Browser Extensions** - Chrome/Firefox tab tracking for deeper insights
+- ⏳ **Performance Optimization** - Memory usage and capture efficiency improvements
+- ⏳ **Enhanced Privacy** - More granular control and filtering options
 
-### 🚀 **Phase 4: Ecosystem (Future)**
-- ⏳ IDE integrations
-- ⏳ Mobile companion
-- ⏳ Export integrations
-- ⏳ Advanced analytics
+### 🔮 **Phase 4: Intelligence & Integrations (Planned)**
+- ⏳ **Local AI Integration** - Ollama/LLM-powered insights without cloud dependency
+- ⏳ **Advanced Pattern Recognition** - Machine learning for productivity patterns
+- ⏳ **IDE Integrations** - VS Code, IntelliJ plugins for developer workflows
+- ⏳ **Export Integrations** - Toggl, RescueTime, Google Calendar compatibility
+- ⏳ **Team Features** - Optional collaborative insights and sharing
+
+### 🚀 **Phase 5: Ecosystem (Future)**
+- ⏳ **Mobile Companion** - iOS/Android apps for comprehensive tracking
+- ⏳ **Advanced Analytics** - Predictive insights and goal tracking
+- ⏳ **API Ecosystem** - Third-party integrations and plugin architecture
+- ⏳ **Enterprise Features** - Team dashboards and organization insights
 
 ## 📝 License
 

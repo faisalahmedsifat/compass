@@ -61,7 +61,7 @@ const EnergyProductivityScatter: React.FC<EnergyProductivityScatterProps> = ({ d
   }
 
   // Prepare scatter plot data
-  const scatterData = data.map((point, index) => ({
+  const scatterData = data.map((point) => ({
     energy: point.energyLevel,
     productivity: point.productivity,
     contextSwitches: point.contextSwitches,
@@ -104,7 +104,10 @@ const EnergyProductivityScatter: React.FC<EnergyProductivityScatterProps> = ({ d
     current.productivity > best.productivity ? current : best
   , scatterData[0]);
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: {
+    active?: boolean;
+    payload?: Array<{ payload: { energy: number; productivity: number; contextSwitches: number; flowState: number; timestamp: string } }>;
+  }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

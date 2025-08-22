@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Sankey } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Shuffle, ArrowRight, AlertCircle, TrendingDown, Target, Zap } from 'lucide-react';
 import type { AppTransition } from '../types';
 
@@ -110,7 +110,11 @@ const AppTransitionAnalysis: React.FC<AppTransitionAnalysisProps> = ({ data, isL
     fullTransition: t
   }));
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: {
+    active?: boolean;
+    payload?: Array<{ value: number; payload: { fullTransition: AppTransition } }>;
+    label?: string;
+  }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload.fullTransition;
       return (

@@ -156,7 +156,7 @@ const deriveAdvancedAnalytics = (activities: Activity[], stats: Stats): Advanced
   const focusPatterns = deriveFocusPatterns(activities);
   const appTransitions = deriveAppTransitions(activities);
   const energyMetrics = deriveEnergyMetrics(activities);
-  const appEfficiency = deriveAppEfficiency(activities, stats);
+  const appEfficiency = deriveAppEfficiency(activities);
   const weeklyTrend = deriveWeeklyTrend(activities);
   const insights = deriveInsights(activities, stats);
 
@@ -254,8 +254,17 @@ const deriveEnergyMetrics = (activities: Activity[]): EnergyMetrics[] => {
   return Object.values(hourlyMetrics).slice(-24); // Last 24 hours
 };
 
-const deriveAppEfficiency = (activities: Activity[], _stats: Stats): AdvancedAnalytics['appEfficiency'] => {
-  const appMetrics: { [key: string]: any } = {};
+const deriveAppEfficiency = (activities: Activity[]): AdvancedAnalytics['appEfficiency'] => {
+  const appMetrics: { [key: string]: {
+    app: string;
+    totalTime: number;
+    totalFocus: number;
+    sessionCount: number;
+    efficiency: number;
+    timeSpent: number;
+    outputScore: number;
+    avgFocusDuration: number;
+  } } = {};
   
   activities.forEach(activity => {
     if (!appMetrics[activity.app_name]) {
@@ -276,7 +285,7 @@ const deriveAppEfficiency = (activities: Activity[], _stats: Stats): AdvancedAna
     appMetrics[activity.app_name].sessionCount++;
   });
   
-  return Object.values(appMetrics).map((app: any) => ({
+  return Object.values(appMetrics).map((app) => ({
     app: app.app,
     efficiency: Math.round((app.totalFocus / app.totalTime) * 100) || 0,
     timeSpent: Math.round(app.totalTime / 60), // minutes
@@ -286,7 +295,13 @@ const deriveAppEfficiency = (activities: Activity[], _stats: Stats): AdvancedAna
 };
 
 const deriveWeeklyTrend = (activities: Activity[]): AdvancedAnalytics['weeklyTrend'] => {
-  const weekData: { [key: string]: any } = {};
+  const weekData: { [key: string]: {
+    day: string;
+    planned: number;
+    actual: number;
+    efficiency: number;
+    mood: number;
+  } } = {};
   
   activities.forEach(activity => {
     const day = new Date(activity.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
@@ -304,7 +319,7 @@ const deriveWeeklyTrend = (activities: Activity[]): AdvancedAnalytics['weeklyTre
     weekData[day].actual += activity.focus_duration / 3600; // hours
   });
   
-  return Object.values(weekData).map((day: any) => ({
+  return Object.values(weekData).map((day) => ({
     ...day,
     actual: Math.round(day.actual * 10) / 10,
     efficiency: Math.round((day.actual / day.planned) * 100)
@@ -312,7 +327,7 @@ const deriveWeeklyTrend = (activities: Activity[]): AdvancedAnalytics['weeklyTre
 };
 
 const deriveInsights = (activities: Activity[], stats: Stats): AdvancedAnalytics['insights'] => {
-  const insights = [];
+  const insights: AdvancedAnalytics['insights'] = [];
   
   // High context switching insight
   if (stats.context_switches > 50) {

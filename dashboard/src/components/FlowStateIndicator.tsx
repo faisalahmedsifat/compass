@@ -14,22 +14,29 @@ interface FlowStateIndicatorProps {
 }
 
 const FlowStateIndicator: React.FC<FlowStateIndicatorProps> = ({ realTimeMetrics, isLoading }) => {
-  const getFlowState = (metrics: any) => {
+  const getFlowState = (metrics: {
+    isInFlowState?: boolean;
+    qualityScore?: number;
+    currentFocusStreak?: number;
+    contextSwitchRate?: number;
+    productivityScore?: number;
+    energyLevel?: number;
+  } | null) => {
     if (!metrics) return { state: 'Unknown', color: 'text-gray-600', bg: 'bg-gray-100', icon: '❓' };
     
-    if (metrics.isInFlowState && metrics.qualityScore > 80) {
+    if (metrics.isInFlowState && (metrics.qualityScore ?? 0) > 80) {
       return { state: 'Deep Flow', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: '🧘‍♂️' };
     }
-    if (metrics.isInFlowState || metrics.qualityScore > 70) {
+    if (metrics.isInFlowState || (metrics.qualityScore ?? 0) > 70) {
       return { state: 'Flow State', color: 'text-blue-700', bg: 'bg-blue-100', icon: '🎯' };
     }
-    if (metrics.currentFocusStreak > 5 && metrics.qualityScore > 50) {
+    if ((metrics.currentFocusStreak ?? 0) > 5 && (metrics.qualityScore ?? 0) > 50) {
       return { state: 'Focused', color: 'text-green-700', bg: 'bg-green-100', icon: '💚' };
     }
-    if (metrics.currentFocusStreak > 2) {
+    if ((metrics.currentFocusStreak ?? 0) > 2) {
       return { state: 'Getting Focused', color: 'text-yellow-700', bg: 'bg-yellow-100', icon: '⚡' };
     }
-    if (metrics.contextSwitchRate > 2) {
+    if ((metrics.contextSwitchRate ?? 0) > 2) {
       return { state: 'Scattered', color: 'text-red-700', bg: 'bg-red-100', icon: '🔄' };
     }
     return { state: 'Starting Up', color: 'text-purple-700', bg: 'bg-purple-100', icon: '🚀' };
@@ -53,7 +60,12 @@ const FlowStateIndicator: React.FC<FlowStateIndicatorProps> = ({ realTimeMetrics
     return { level: 'Depleted', color: 'text-red-600', icon: '🪫' };
   };
 
-  const CircularProgress = ({ value, size = 120, strokeWidth = 8, color = "#3b82f6" }) => {
+  const CircularProgress = ({ value, size = 120, strokeWidth = 8, color = "#3b82f6" }: {
+    value: number;
+    size?: number;
+    strokeWidth?: number;
+    color?: string;
+  }) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
     const strokeDasharray = circumference;

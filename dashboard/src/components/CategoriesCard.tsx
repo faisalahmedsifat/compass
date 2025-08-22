@@ -1,5 +1,5 @@
 import React from 'react';
-import { PieChart, Folder } from 'lucide-react';
+import { PieChart } from 'lucide-react';
 
 interface CategoriesCardProps {
   data?: Record<string, number>;

@@ -90,7 +90,11 @@ const AppEfficiencyRadar: React.FC<AppEfficiencyRadarProps> = ({ data, isLoading
   const avgEfficiency = data.reduce((sum, app) => sum + app.efficiency, 0) / data.length;
   const totalProductiveTime = data.reduce((sum, app) => sum + app.timeSpent, 0);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: {
+    active?: boolean;
+    payload?: Array<{ value: number; dataKey: string; color: string }>;
+    label?: string;
+  }) => {
     if (active && payload && payload.length) {
       const appData = radarData.find(app => app.app === label);
       return (

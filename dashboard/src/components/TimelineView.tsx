@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, Clock, ChevronLeft, ChevronRight, Eye, BarChart3 } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import type { Activity } from '../types';
 
 interface TimelineViewProps {
@@ -32,7 +32,7 @@ interface HoverData {
   productivity: number;
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({ activities, isLoading, selectedPeriod }) => {
+const TimelineView: React.FC<TimelineViewProps> = ({ activities, isLoading }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'hour' | 'day' | 'week' | 'month'>('day');
   const [hoveredEntry, setHoveredEntry] = useState<HoverData | null>(null);
@@ -74,12 +74,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({ activities, isLoading, sele
                  activityDate.getHours() === date.getHours();
         case 'day':
           return activityDate.toDateString() === date.toDateString();
-        case 'week':
+        case 'week': {
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - date.getDay());
           const weekEnd = new Date(weekStart);
           weekEnd.setDate(weekStart.getDate() + 6);
           return activityDate >= weekStart && activityDate <= weekEnd;
+        }
         case 'month':
           return activityDate.getMonth() === date.getMonth() &&
                  activityDate.getFullYear() === date.getFullYear();
@@ -151,12 +152,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({ activities, isLoading, sele
       case 'week':
         slots.push('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
         break;
-      case 'month':
+      case 'month': {
         const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
         for (let day = 1; day <= daysInMonth; day++) {
           slots.push(day.toString());
         }
         break;
+      }
     }
     
     return slots;
@@ -240,10 +242,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({ activities, isLoading, sele
           month: 'long', 
           day: 'numeric' 
         });
-      case 'week':
+      case 'week': {
         const weekStart = new Date(selectedDate);
         weekStart.setDate(selectedDate.getDate() - selectedDate.getDay());
         return `Week of ${weekStart.toLocaleDateString()}`;
+      }
       case 'month':
         return selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       default:
