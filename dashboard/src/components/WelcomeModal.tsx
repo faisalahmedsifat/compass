@@ -37,12 +37,20 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ isOpen, onClose }) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
               <BarChart3 className="w-8 h-8 text-blue-600 mb-3" />
               <h4 className="font-semibold text-blue-900 mb-2">Overview Dashboard</h4>
               <p className="text-sm text-blue-700">
                 Real-time workspace state, flow indicators, and key metrics at a glance.
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-6 rounded-lg border border-cyan-200">
+              <div className="w-8 h-8 text-cyan-600 mb-3 flex items-center justify-center text-lg">📅</div>
+              <h4 className="font-semibold text-cyan-900 mb-2">Timeline View</h4>
+              <p className="text-sm text-cyan-700">
+                Google Calendar-like timeline showing your activity patterns by hour, day, week, or month.
               </p>
             </div>
 
@@ -92,7 +100,11 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ isOpen, onClose }) => {
             <ul className="space-y-2 text-sm text-gray-700">
               <li className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span><strong>Three-Tab Interface:</strong> Overview, Analytics, and Insights for different use cases</span>
+                <span><strong>Four-Tab Interface:</strong> Overview, Timeline, Analytics, and Insights for comprehensive analysis</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                <span><strong>Calendar Timeline:</strong> Google Calendar-like view with hour/day/week/month granularity</span>
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>

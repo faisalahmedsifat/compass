@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, Compass, BarChart3, Brain, Zap, TrendingUp } from 'lucide-react';
+import { Activity, Compass, BarChart3, Brain, Zap, TrendingUp, Calendar } from 'lucide-react';
 import { 
   useCurrentWorkspace, 
   useActivities, 
@@ -24,13 +24,14 @@ import AppTransitionAnalysis from './AppTransitionAnalysis';
 import TimePeriodSelector from './TimePeriodSelector';
 import ScreenshotGallery from './ScreenshotGallery';
 import WelcomeModal from './WelcomeModal';
+import TimelineView from './TimelineView';
 
 const Dashboard: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('day');
-  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'insights'>('overview');
+  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'insights' | 'timeline'>('overview');
   const [showWelcome, setShowWelcome] = useState(() => {
-    // Show welcome modal if user hasn't seen it before
-    return !localStorage.getItem('compass-welcome-seen');
+    // Show welcome modal if user hasn't seen the latest version
+    return !localStorage.getItem('compass-welcome-seen-v2');
   });
 
   // Basic hooks
@@ -46,7 +47,7 @@ const Dashboard: React.FC = () => {
   const { data: realTimeMetrics, isLoading: realTimeLoading } = useRealTimeMetrics();
 
   const handleWelcomeClose = () => {
-    localStorage.setItem('compass-welcome-seen', 'true');
+    localStorage.setItem('compass-welcome-seen-v2', 'true');
     setShowWelcome(false);
   };
 
@@ -67,7 +68,7 @@ const Dashboard: React.FC = () => {
             {/* Navigation and Controls */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div className="flex gap-2">
-                {(['overview', 'analytics', 'insights'] as const).map((view) => (
+                {(['overview', 'timeline', 'analytics', 'insights'] as const).map((view) => (
                   <button
                     key={view}
                     onClick={() => setSelectedView(view)}
@@ -78,6 +79,7 @@ const Dashboard: React.FC = () => {
                     }`}
                   >
                     {view === 'overview' && <BarChart3 className="w-4 h-4" />}
+                    {view === 'timeline' && <Calendar className="w-4 h-4" />}
                     {view === 'analytics' && <TrendingUp className="w-4 h-4" />}
                     {view === 'insights' && <Brain className="w-4 h-4" />}
                     {view.charAt(0).toUpperCase() + view.slice(1)}
@@ -126,6 +128,79 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <FocusHeatmap data={focusPatterns} isLoading={focusLoading} />
               <AppTransitionAnalysis data={appTransitions} isLoading={transitionsLoading} />
+            </div>
+          </div>
+        )}
+
+        {/* Timeline Tab */}
+        {selectedView === 'timeline' && (
+          <div className="space-y-8">
+            {/* Main Timeline View */}
+            <TimelineView 
+              activities={activities} 
+              isLoading={activitiesLoading}
+              selectedPeriod={selectedPeriod}
+            />
+
+            {/* Supporting Context */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div>
+                <FlowStateIndicator 
+                  realTimeMetrics={realTimeMetrics} 
+                  isLoading={realTimeLoading} 
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-green-500" />
+                    Timeline Insights
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {stats?.total_time ? Math.round(stats.total_time / 3600000000000) : 0}h
+                      </div>
+                      <div className="text-sm text-gray-600">Total Active</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {stats?.context_switches || 0}
+                      </div>
+                      <div className="text-sm text-gray-600">Context Switches</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {Object.keys(stats?.by_app || {}).length}
+                      </div>
+                      <div className="text-sm text-gray-600">Apps Used</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {activities?.filter(a => a.has_screenshot).length || 0}
+                      </div>
+                      <div className="text-sm text-gray-600">Screenshots</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                    <h4 className="font-medium text-indigo-900 mb-2">📅 Timeline Navigation Tips</h4>
+                    <ul className="text-sm text-indigo-700 space-y-1">
+                      <li>• <strong>Hour View:</strong> See 5-minute intervals with detailed app usage</li>
+                      <li>• <strong>Day View:</strong> 24-hour overview showing dominant apps per hour</li>
+                      <li>• <strong>Week View:</strong> Daily patterns across the entire week</li>
+                      <li>• <strong>Month View:</strong> High-level daily activity patterns</li>
+                      <li>• <strong>Hover any cell</strong> to see detailed app breakdowns and productivity scores</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Analytics for Context */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CategoriesCard data={stats?.by_category} isLoading={statsLoading} />
+              <ActivitiesCard data={activities} isLoading={activitiesLoading} />
             </div>
           </div>
         )}
