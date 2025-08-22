@@ -55,6 +55,9 @@ func NewCaptureEngine(config *types.Config, storage Storage, categorizer Categor
 // Start begins the capture process
 func (c *CaptureEngine) Start(ctx context.Context) error {
 	log.Printf("Starting capture engine with %v interval", c.interval)
+	if c.config.Tracking.CaptureScreenshots {
+		log.Printf("Screenshots enabled with %v interval", c.config.Tracking.ScreenshotInterval)
+	}
 
 	// Initialize last capture and screenshot times
 	c.lastCapture = time.Time{}

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -41,11 +42,23 @@ func Load() (*types.Config, error) {
 			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 		// Config file not found is OK, we'll use defaults
+		log.Printf("Config file not found, using defaults")
+	} else {
+		log.Printf("Config file loaded from: %s", viper.ConfigFileUsed())
 	}
 
 	// Unmarshal into struct
 	if err := viper.Unmarshal(config); err != nil {
 		return nil, fmt.Errorf("error unmarshaling config: %w", err)
+	}
+	
+	// Manually handle screenshot_interval since Viper's auto-unmarshaling isn't working for it
+	if screenshotIntervalStr := viper.GetString("tracking.screenshot_interval"); screenshotIntervalStr != "" {
+		if duration, err := time.ParseDuration(screenshotIntervalStr); err == nil {
+			config.Tracking.ScreenshotInterval = duration
+		} else {
+			log.Printf("Failed to parse screenshot_interval '%s': %v", screenshotIntervalStr, err)
+		}
 	}
 
 	// Validate configuration

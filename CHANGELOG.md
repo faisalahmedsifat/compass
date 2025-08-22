@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🎉 Initial Release - MVP Complete!
 
 #### Added
+
 - **Complete window tracking** for macOS using AppleScript
 - **Real-time categorization** engine with rule-based classification
 - **Local SQLite database** for activity storage
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Installation script** for easy setup
 
 #### Features
+
 - **Smart categorization**: Development, Debugging, Communication, Learning, etc.
 - **Window relationships**: Tracks all background windows and their context
 - **Focus time tracking**: Monitors how long windows stay active
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Export functionality**: JSON and CSV formats
 
 #### Technical Implementation
+
 - **Go 1.21+** with modern dependency management
 - **SQLite** for local data storage with migrations
 - **Gorilla WebSocket** for real-time communication
@@ -43,17 +46,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Embedded dashboard** (no external dependencies)
 
 #### Platforms
+
 - ✅ **macOS** (Intel + Apple Silicon) - Fully tested and working
 - ⏳ **Linux** (planned for v0.2.0)
 - ⏳ **Windows** (planned for v0.2.0)
 
 #### Performance
+
 - **~18MB binary** (single file distribution)
 - **<30MB RAM** usage during operation
 - **<1% CPU** impact on modern systems
 - **10-second capture interval** (configurable)
 
 #### Security & Privacy
+
 - **Local-only data** (never leaves your machine)
 - **Configurable exclusions** for sensitive applications
 - **Title filtering** for private content
@@ -61,9 +67,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SQLite encryption** support ready
 
 ### 🔄 **Live Test Results**
+
 ```
 Total Active Time: 1h+ tracked
-Windows Detected: 7+ simultaneously  
+Windows Detected: 7+ simultaneously
 Categories: Development (primary), Communication
 Context Switches: 11+ detected
 Applications: Cursor, Chrome, Slack, Terminal, Preview, System Settings
@@ -74,7 +81,41 @@ Database: 20+ activities captured and stored
 
 ## [Unreleased]
 
+### Added
+
+- **Configurable screenshot intervals** - Screenshots can now be captured at different intervals than workspace capture
+- **Enhanced configuration documentation** - Added comprehensive CONFIG.md and improved README configuration sections
+- **Configuration development guidelines** - Updated CONTRIBUTING.md with configuration management best practices
+- **Cursor AI rules** - Added .cursorrules file to ensure documentation consistency
+
+### Changed
+
+- **Screenshot capture logic** - Screenshots now use independent timing from workspace capture
+- **Configuration structure** - Added `screenshot_interval` field to tracking configuration
+- **Documentation structure** - Improved configuration documentation with examples and troubleshooting
+
+### Configuration
+
+- **New option**: `tracking.screenshot_interval` - Controls how often screenshots are taken (default: 60s)
+- **Backward compatible** - Existing configurations continue to work with sensible defaults
+- **Validation added** - Screenshot interval must be at least 1 second
+
+### Examples
+
+```yaml
+# High-frequency monitoring with reasonable screenshots
+tracking:
+  interval: 10s           # Workspace capture every 10 seconds
+  screenshot_interval: 300s  # Screenshots every 5 minutes
+
+# Battery-optimized configuration
+tracking:
+  interval: 30s           # Less frequent workspace capture
+  screenshot_interval: 600s  # Screenshots every 10 minutes
+```
+
 ### Planned for v0.2.0
+
 - Linux window tracking support
 - Windows window tracking support
 - Browser tab extraction
@@ -82,12 +123,14 @@ Database: 20+ activities captured and stored
 - Enhanced categorization rules
 
 ### Planned for v0.3.0
+
 - Local AI integration (Ollama)
 - Advanced pattern recognition
 - Productivity insights
 - Team collaboration features (optional)
 
 ### Planned for v1.0.0
+
 - IDE plugins (VS Code, IntelliJ)
 - Mobile companion app
 - Advanced analytics
