@@ -1,5 +1,5 @@
+import { Camera, Clock, ExternalLink, Eye, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { Camera, Clock, Eye, X, ExternalLink } from 'lucide-react';
 import type { Activity } from '../types';
 
 interface ScreenshotGalleryProps {
@@ -119,7 +119,7 @@ const ScreenshotGallery: React.FC<ScreenshotGalleryProps> = ({ activities, isLoa
               </div>
 
               {/* Overlay with app info */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-end">
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-end">
                 <div className="w-full p-3 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <div className="text-white">
                     <div className="flex items-center gap-2 mb-1">
@@ -137,7 +137,7 @@ const ScreenshotGallery: React.FC<ScreenshotGalleryProps> = ({ activities, isLoa
 
               {/* Category badge */}
               <div className="absolute top-2 right-2">
-                <span className="bg-white bg-opacity-90 text-xs px-2 py-1 rounded-full font-medium text-gray-700">
+                <span className="bg-white/90 text-xs px-2 py-1 rounded-full font-medium text-gray-700">
                   {activity.category}
                 </span>
               </div>
@@ -156,7 +156,7 @@ const ScreenshotGallery: React.FC<ScreenshotGalleryProps> = ({ activities, isLoa
 
       {/* Modal for full-size screenshot */}
       {selectedScreenshot && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-6xl max-h-full overflow-auto">
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center gap-3">
