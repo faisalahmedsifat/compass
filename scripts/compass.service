@@ -1,0 +1,29 @@
+[Unit]
+Description=Compass Workspace Tracker
+Documentation=https://github.com/faisalahmedsifat/compass
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=exec
+User=%i
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/%i
+ExecStart=/usr/local/bin/compass start
+ExecStop=/usr/local/bin/compass stop
+ExecReload=/usr/local/bin/compass restart
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=compass
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=false
+ReadWritePaths=/home/%i/.compass /home/%i/.config/compass
+
+[Install]
+WantedBy=default.target

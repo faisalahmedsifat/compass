@@ -1,0 +1,19 @@
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="24" cy="24" r="22" fill="#ff6600" stroke="#e55a00" stroke-width="2"/>
+  
+  <!-- Compass needle -->
+  <g transform="translate(24,24)">
+    <!-- North pointer (red) -->
+    <polygon points="0,-16 -3,-8 3,-8" fill="#ffffff"/>
+    <!-- South pointer (white) -->
+    <polygon points="0,16 -3,8 3,8" fill="#ffccaa"/>
+    <!-- East-West arms -->
+    <line x1="-12" y1="0" x2="12" y2="0" stroke="#ffffff" stroke-width="2"/>
+    <!-- Center dot -->
+    <circle cx="0" cy="0" r="2" fill="#ffffff"/>
+  </g>
+  
+  <!-- Firefox-themed accent -->
+  <text x="24" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#ffffff">🦊</text>
+</svg>

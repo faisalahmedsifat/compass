@@ -2,7 +2,7 @@
 # Copy this to ~/.config/compass/config.yaml and customize as needed
 
 tracking:
-  interval: 10s                    # How often to capture workspace state
+  interval: 1s                     # How often to capture workspace state (reduced for accuracy)
   screenshot_interval: 60s         # How often to take screenshots (independent of capture interval)
   capture_screenshots: true       # Take screenshots for visual record
   track_all_windows: true         # Track all windows, not just active

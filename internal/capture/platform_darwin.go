@@ -3,6 +3,7 @@
 package capture
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -17,6 +18,11 @@ import (
 type DarwinWindowManager struct {
 	lastActiveWindow *types.Window
 	focusStartTime   time.Time
+
+	// Event-driven fields
+	eventListenerActive bool
+	eventChan           chan<- *types.WindowEvent
+	stopEventChan       chan struct{}
 }
 
 // NewDarwinWindowManager creates a new macOS window manager
@@ -230,6 +236,164 @@ func (m *DarwinWindowManager) GetFocusDuration() time.Duration {
 		return 0
 	}
 	return time.Since(m.focusStartTime)
+}
+
+// StartEventListener starts listening for window focus events on macOS
+func (m *DarwinWindowManager) StartEventListener(ctx context.Context, eventChan chan<- *types.WindowEvent) error {
+	if m.eventListenerActive {
+		return fmt.Errorf("event listener is already active")
+	}
+
+	m.eventChan = eventChan
+	m.stopEventChan = make(chan struct{})
+	m.eventListenerActive = true
+
+	go m.eventListenerLoop(ctx)
+	return nil
+}
+
+// StopEventListener stops the event listener
+func (m *DarwinWindowManager) StopEventListener() error {
+	if !m.eventListenerActive {
+		return nil
+	}
+
+	close(m.stopEventChan)
+	m.eventListenerActive = false
+	return nil
+}
+
+// eventListenerLoop runs the main event listening loop for macOS
+func (m *DarwinWindowManager) eventListenerLoop(ctx context.Context) {
+	// Use adaptive polling: faster when changes detected, slower when stable
+	fastTicker := time.NewTicker(100 * time.Millisecond)  // Fast: 100ms for rapid changes
+	slowTicker := time.NewTicker(1000 * time.Millisecond) // Slow: 1s for stable periods
+	defer fastTicker.Stop()
+	defer slowTicker.Stop()
+
+	var lastActiveWindow *types.Window
+	var stableCount int
+	useFastPolling := true
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-m.stopEventChan:
+			return
+		case <-fastTicker.C:
+			if useFastPolling {
+				m.checkWindowChange(&lastActiveWindow, &stableCount, &useFastPolling)
+			}
+		case <-slowTicker.C:
+			if !useFastPolling {
+				m.checkWindowChange(&lastActiveWindow, &stableCount, &useFastPolling)
+			}
+		}
+	}
+}
+
+// checkWindowChange checks for window changes and sends events (macOS)
+func (m *DarwinWindowManager) checkWindowChange(lastActiveWindow **types.Window, stableCount *int, useFastPolling *bool) {
+	// Get current active window
+	currentWindow, err := m.GetActiveWindow()
+	if err != nil {
+		return // Skip on error
+	}
+
+	// Check if window changed
+	if *lastActiveWindow == nil || !m.windowsEqual(*lastActiveWindow, currentWindow) {
+		// Window changed - send event
+		event := &types.WindowEvent{
+			Type:       "switch",
+			Timestamp:  time.Now(),
+			Window:     currentWindow,
+			PrevWindow: *lastActiveWindow,
+		}
+
+		// Non-blocking send
+		select {
+		case m.eventChan <- event:
+		default:
+			// Channel full, skip this event
+		}
+
+		*lastActiveWindow = currentWindow
+		*stableCount = 0       // Reset stable count
+		*useFastPolling = true // Switch to fast polling when changes occur
+	} else {
+		// No change detected
+		*stableCount++
+
+		// Switch to slow polling after 10 stable checks (1 second of no changes)
+		if *stableCount >= 10 {
+			*useFastPolling = false
+		}
+	}
+}
+
+// windowsEqual checks if two windows are the same
+func (m *DarwinWindowManager) windowsEqual(w1, w2 *types.Window) bool {
+	if w1 == nil || w2 == nil {
+		return w1 == w2
+	}
+	return w1.AppName == w2.AppName &&
+		w1.Title == w2.Title &&
+		w1.ProcessID == w2.ProcessID
+}
+
+// GetIdleState returns the current user idle state on macOS
+func (m *DarwinWindowManager) GetIdleState() (*types.IdleState, error) {
+	// Use ioreg to get idle time on macOS
+	idleTime, err := m.getIdleTimeIoreg()
+	if err != nil {
+		// Fallback - assume active
+		return &types.IdleState{
+			IsIdle:     false,
+			IdleTime:   0,
+			LastActive: time.Now(),
+		}, nil
+	}
+
+	isIdle := idleTime > 5*time.Minute // Consider idle after 5 minutes
+	return &types.IdleState{
+		IsIdle:     isIdle,
+		IdleTime:   idleTime,
+		LastActive: time.Now().Add(-idleTime),
+	}, nil
+}
+
+// getIdleTimeIoreg gets idle time using ioreg command on macOS
+func (m *DarwinWindowManager) getIdleTimeIoreg() (time.Duration, error) {
+	cmd := exec.Command("ioreg", "-c", "IOHIDSystem")
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, fmt.Errorf("ioreg command failed: %w", err)
+	}
+
+	// Look for HIDIdleTime in the output
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "HIDIdleTime") {
+			// Parse line like: "HIDIdleTime" = 1234567890
+			parts := strings.Split(line, "=")
+			if len(parts) >= 2 {
+				valueStr := strings.TrimSpace(parts[1])
+				// Remove any trailing characters
+				valueStr = strings.Fields(valueStr)[0]
+
+				idleNanoseconds, err := strconv.ParseInt(valueStr, 10, 64)
+				if err != nil {
+					continue
+				}
+
+				// HIDIdleTime is in nanoseconds since last input
+				return time.Duration(idleNanoseconds), nil
+			}
+		}
+	}
+
+	return 0, fmt.Errorf("could not find HIDIdleTime in ioreg output")
 }
 
 // newPlatformWindowManager creates a platform-specific window manager (macOS)

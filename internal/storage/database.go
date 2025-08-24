@@ -39,7 +39,7 @@ func (d *Database) Close() error {
 	return d.db.Close()
 }
 
-// SaveActivity saves an activity record to the database
+// SaveActivity saves an activity record to the database and updates aggregations
 func (d *Database) SaveActivity(activity *types.Activity) error {
 	// Serialize windows to JSON
 	windowsJSON, err := json.Marshal(activity.AllWindows)
@@ -78,6 +78,15 @@ func (d *Database) SaveActivity(activity *types.Activity) error {
 	}
 
 	activity.ID = id
+
+	// Update aggregations asynchronously to avoid blocking activity capture
+	go func() {
+		engine := NewAggregationEngine(d)
+		if err := engine.ProcessNewActivity(activity); err != nil {
+			log.Printf("Failed to update aggregations for activity %d: %v", activity.ID, err)
+		}
+	}()
+
 	return nil
 }
 
@@ -139,8 +148,13 @@ func (d *Database) GetActivities(from, to time.Time, limit int) ([]*types.Activi
 	return activities, rows.Err()
 }
 
-// GetCurrentWorkspace gets the most recent workspace state
+// GetCurrentWorkspace gets the most recent workspace state with real-time focus duration
 func (d *Database) GetCurrentWorkspace() (*types.CurrentWorkspace, error) {
+	return d.GetCurrentWorkspaceWithFocusCalculator(nil)
+}
+
+// GetCurrentWorkspaceWithFocusCalculator gets current workspace with optional real-time focus calculation
+func (d *Database) GetCurrentWorkspaceWithFocusCalculator(focusCalculator func() time.Duration) (*types.CurrentWorkspace, error) {
 	query := `
 		SELECT app_name, window_title, window_list, category, timestamp, focus_duration
 		FROM activities
@@ -191,18 +205,26 @@ func (d *Database) GetCurrentWorkspace() (*types.CurrentWorkspace, error) {
 	// Calculate context switches for the last hour
 	contextSwitches, _ := d.getContextSwitches(time.Now().Add(-time.Hour), time.Now())
 
+	// Use real-time focus duration if calculator is provided, otherwise use stored duration
+	var realTimeFocusDuration time.Duration
+	if focusCalculator != nil {
+		realTimeFocusDuration = focusCalculator()
+	} else {
+		realTimeFocusDuration = time.Duration(focusDuration) * time.Second
+	}
+
 	return &types.CurrentWorkspace{
 		ActiveWindow:    activeWindow,
 		AllWindows:      windows,
 		WindowCount:     len(windows),
 		Category:        category,
-		FocusTime:       formatDuration(time.Duration(focusDuration) * time.Second),
+		FocusTime:       formatDuration(realTimeFocusDuration),
 		ContextSwitches: contextSwitches,
 		Timestamp:       timestamp,
 	}, nil
 }
 
-// GetStats retrieves aggregated statistics for a period
+// GetStats retrieves aggregated statistics for a period using pre-computed data
 func (d *Database) GetStats(period string, date time.Time) (*types.Stats, error) {
 	var from, to time.Time
 
@@ -225,76 +247,8 @@ func (d *Database) GetStats(period string, date time.Time) (*types.Stats, error)
 		return nil, fmt.Errorf("invalid period: %s", period)
 	}
 
-	stats := &types.Stats{
-		Period:     period,
-		ByApp:      make(map[string]time.Duration),
-		ByCategory: make(map[string]time.Duration),
-	}
-
-	// Get app statistics
-	appQuery := `
-		SELECT app_name, SUM(focus_duration) as total_seconds
-		FROM activities
-		WHERE timestamp BETWEEN ? AND ? AND is_active = 1
-		GROUP BY app_name
-		ORDER BY total_seconds DESC
-	`
-
-	rows, err := d.db.Query(appQuery, from, to)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query app stats: %w", err)
-	}
-	defer rows.Close()
-
-	var totalTime time.Duration
-	for rows.Next() {
-		var appName string
-		var seconds int
-		if err := rows.Scan(&appName, &seconds); err != nil {
-			continue
-		}
-		duration := time.Duration(seconds) * time.Second
-		stats.ByApp[appName] = duration
-		totalTime += duration
-	}
-
-	// Get category statistics
-	categoryQuery := `
-		SELECT category, SUM(focus_duration) as total_seconds
-		FROM activities
-		WHERE timestamp BETWEEN ? AND ? AND is_active = 1
-		GROUP BY category
-		ORDER BY total_seconds DESC
-	`
-
-	rows, err = d.db.Query(categoryQuery, from, to)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query category stats: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var category string
-		var seconds int
-		if err := rows.Scan(&category, &seconds); err != nil {
-			continue
-		}
-		duration := time.Duration(seconds) * time.Second
-		stats.ByCategory[category] = duration
-	}
-
-	stats.TotalTime = totalTime
-
-	// Get context switches
-	stats.ContextSwitches, _ = d.getContextSwitches(from, to)
-
-	// Get longest focus period
-	stats.LongestFocus, _ = d.getLongestFocus(from, to)
-
-	// Get patterns
-	stats.Patterns, _ = d.getPatterns(from, to)
-
-	return stats, nil
+	// Use the new aggregated stats method
+	return d.GetAggregatedStats(from, to, period)
 }
 
 // GetScreenshot retrieves a screenshot by activity ID
@@ -387,20 +341,82 @@ func (d *Database) getPatterns(from, to time.Time) ([]types.Pattern, error) {
 	return patterns, nil
 }
 
-// CleanupOldData removes old activities based on retention policy
+// CleanupOldData removes old activities and aggregations based on retention policy
 func (d *Database) CleanupOldData(retentionDays int) error {
 	cutoff := time.Now().AddDate(0, 0, -retentionDays)
 
+	// Clean up raw activities
 	query := `DELETE FROM activities WHERE timestamp < ?`
 	result, err := d.db.Exec(query, cutoff)
 	if err != nil {
-		return fmt.Errorf("failed to cleanup old data: %w", err)
+		return fmt.Errorf("failed to cleanup old activities: %w", err)
 	}
 
 	rowsAffected, _ := result.RowsAffected()
 	log.Printf("Cleaned up %d old activity records", rowsAffected)
 
-	return nil
+	// Clean up aggregations based on retention policies
+	engine := NewAggregationEngine(d)
+	retentionPolicy := map[TimeGranularity]time.Duration{
+		GranularityMinute: 7 * 24 * time.Hour,         // Keep minutes for 7 days
+		GranularityHour:   30 * 24 * time.Hour,        // Keep hours for 30 days
+		GranularityDay:    365 * 24 * time.Hour,       // Keep days for 1 year
+		GranularityWeek:   2 * 365 * 24 * time.Hour,   // Keep weeks for 2 years
+		GranularityMonth:  5 * 365 * 24 * time.Hour,   // Keep months for 5 years
+		GranularityYear:   100 * 365 * 24 * time.Hour, // Keep years for 100 years
+	}
+
+	return engine.CleanupOldAggregations(retentionPolicy)
+}
+
+// BackfillAggregations runs a complete backfill of aggregation tables
+func (d *Database) BackfillAggregations() error {
+	// Get date range of existing activities
+	var firstActivity, lastActivity sql.NullString
+	err := d.db.QueryRow("SELECT MIN(timestamp), MAX(timestamp) FROM activities").Scan(&firstActivity, &lastActivity)
+	if err != nil {
+		return fmt.Errorf("failed to get activity date range: %w", err)
+	}
+
+	if !firstActivity.Valid || !lastActivity.Valid {
+		log.Println("No activities found, skipping aggregation backfill")
+		return nil
+	}
+
+	// Try multiple timestamp formats for parsing
+	from, err := parseFlexibleTimestamp(firstActivity.String)
+	if err != nil {
+		return fmt.Errorf("failed to parse first activity timestamp: %w", err)
+	}
+
+	to, err := parseFlexibleTimestamp(lastActivity.String)
+	if err != nil {
+		return fmt.Errorf("failed to parse last activity timestamp: %w", err)
+	}
+
+	engine := NewAggregationEngine(d)
+	return engine.BackfillAggregations(from, to)
+}
+
+// GetAggregationStatus returns the status of aggregation tables
+func (d *Database) GetAggregationStatus() (map[string]interface{}, error) {
+	engine := NewAggregationEngine(d)
+	stats, err := engine.GetAggregationStats()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get aggregation stats: %w", err)
+	}
+
+	// Add last aggregation run timestamp
+	var lastRun sql.NullString
+	d.db.QueryRow("SELECT value FROM settings WHERE key = 'last_aggregation_run'").Scan(&lastRun)
+
+	status := map[string]interface{}{
+		"aggregation_tables": stats,
+		"last_run":           lastRun.String,
+		"enabled":            true,
+	}
+
+	return status, nil
 }
 
 // formatDuration formats a duration in a human-readable format
@@ -412,4 +428,24 @@ func formatDuration(d time.Duration) string {
 		return fmt.Sprintf("%dm %ds", int(d.Minutes()), int(d.Seconds())%60)
 	}
 	return fmt.Sprintf("%dh %dm", int(d.Hours()), int(d.Minutes())%60)
+}
+
+// parseFlexibleTimestamp tries multiple timestamp formats
+func parseFlexibleTimestamp(timestamp string) (time.Time, error) {
+	formats := []string{
+		"2006-01-02 15:04:05",
+		"2006-01-02 15:04:05+00:00",
+		"2006-01-02T15:04:05Z",
+		time.RFC3339,
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05-07:00",
+	}
+
+	for _, format := range formats {
+		if parsed, err := time.Parse(format, timestamp); err == nil {
+			return parsed, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("unable to parse timestamp: %s", timestamp)
 }

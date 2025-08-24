@@ -3,6 +3,7 @@
 package capture
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -19,6 +20,11 @@ type LinuxWindowManager struct {
 	focusStartTime   time.Time
 	// Track focus sessions to prevent runaway time accumulation
 	focusSessions map[string]time.Time // key: "appname:title:pid"
+
+	// Event-driven fields
+	eventListenerActive bool
+	eventChan           chan<- *types.WindowEvent
+	stopEventChan       chan struct{}
 }
 
 // NewLinuxWindowManager creates a new Linux window manager
@@ -331,6 +337,192 @@ func (m *LinuxWindowManager) ResetFocusTracking() {
 	m.lastActiveWindow = nil
 	m.focusStartTime = time.Now()
 	m.focusSessions = make(map[string]time.Time)
+}
+
+// StartEventListener starts listening for window focus events using X11
+func (m *LinuxWindowManager) StartEventListener(ctx context.Context, eventChan chan<- *types.WindowEvent) error {
+	if m.eventListenerActive {
+		return fmt.Errorf("event listener is already active")
+	}
+
+	m.eventChan = eventChan
+	m.stopEventChan = make(chan struct{})
+	m.eventListenerActive = true
+
+	go m.eventListenerLoop(ctx)
+	return nil
+}
+
+// StopEventListener stops the event listener
+func (m *LinuxWindowManager) StopEventListener() error {
+	if !m.eventListenerActive {
+		return nil
+	}
+
+	close(m.stopEventChan)
+	m.eventListenerActive = false
+	return nil
+}
+
+// eventListenerLoop runs the main event listening loop
+func (m *LinuxWindowManager) eventListenerLoop(ctx context.Context) {
+	// Use adaptive polling: faster when changes detected, slower when stable
+	fastTicker := time.NewTicker(100 * time.Millisecond)  // Fast: 100ms for rapid changes
+	slowTicker := time.NewTicker(1000 * time.Millisecond) // Slow: 1s for stable periods
+	defer fastTicker.Stop()
+	defer slowTicker.Stop()
+
+	var lastActiveWindow *types.Window
+	var stableCount int
+	useFastPolling := true
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-m.stopEventChan:
+			return
+		case <-fastTicker.C:
+			if useFastPolling {
+				m.checkWindowChange(&lastActiveWindow, &stableCount, &useFastPolling)
+			}
+		case <-slowTicker.C:
+			if !useFastPolling {
+				m.checkWindowChange(&lastActiveWindow, &stableCount, &useFastPolling)
+			}
+		}
+	}
+}
+
+// checkWindowChange checks for window changes and sends events
+func (m *LinuxWindowManager) checkWindowChange(lastActiveWindow **types.Window, stableCount *int, useFastPolling *bool) {
+	// Get current active window
+	currentWindow, err := m.GetActiveWindow()
+	if err != nil {
+		return // Skip on error
+	}
+
+	// Check if window changed
+	if *lastActiveWindow == nil || !m.windowsEqual(*lastActiveWindow, currentWindow) {
+		// Window changed - send event
+		event := &types.WindowEvent{
+			Type:       "switch",
+			Timestamp:  time.Now(),
+			Window:     currentWindow,
+			PrevWindow: *lastActiveWindow,
+		}
+
+		// Non-blocking send
+		select {
+		case m.eventChan <- event:
+		default:
+			// Channel full, skip this event
+		}
+
+		*lastActiveWindow = currentWindow
+		*stableCount = 0       // Reset stable count
+		*useFastPolling = true // Switch to fast polling when changes occur
+	} else {
+		// No change detected
+		*stableCount++
+
+		// Switch to slow polling after 10 stable checks (1 second of no changes)
+		if *stableCount >= 10 {
+			*useFastPolling = false
+		}
+	}
+}
+
+// windowsEqual checks if two windows are the same
+func (m *LinuxWindowManager) windowsEqual(w1, w2 *types.Window) bool {
+	if w1 == nil || w2 == nil {
+		return w1 == w2
+	}
+	return w1.AppName == w2.AppName &&
+		w1.Title == w2.Title &&
+		w1.ProcessID == w2.ProcessID
+}
+
+// GetIdleState returns the current user idle state
+func (m *LinuxWindowManager) GetIdleState() (*types.IdleState, error) {
+	// Try xprintidle first (most accurate)
+	if idleTime, err := m.getIdleTimeXprintidle(); err == nil {
+		isIdle := idleTime > 5*time.Minute // Consider idle after 5 minutes
+		return &types.IdleState{
+			IsIdle:     isIdle,
+			IdleTime:   idleTime,
+			LastActive: time.Now().Add(-idleTime),
+		}, nil
+	}
+
+	// Fallback to xscreensaver-command
+	if idleTime, err := m.getIdleTimeXScreensaver(); err == nil {
+		isIdle := idleTime > 5*time.Minute
+		return &types.IdleState{
+			IsIdle:     isIdle,
+			IdleTime:   idleTime,
+			LastActive: time.Now().Add(-idleTime),
+		}, nil
+	}
+
+	// Final fallback - assume active
+	return &types.IdleState{
+		IsIdle:     false,
+		IdleTime:   0,
+		LastActive: time.Now(),
+	}, nil
+}
+
+// getIdleTimeXprintidle gets idle time using xprintidle command
+func (m *LinuxWindowManager) getIdleTimeXprintidle() (time.Duration, error) {
+	cmd := exec.Command("xprintidle")
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, fmt.Errorf("xprintidle not available: %w", err)
+	}
+
+	idleMs := strings.TrimSpace(string(output))
+	ms, err := strconv.ParseInt(idleMs, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse idle time: %w", err)
+	}
+
+	return time.Duration(ms) * time.Millisecond, nil
+}
+
+// getIdleTimeXScreensaver gets idle time using xscreensaver-command
+func (m *LinuxWindowManager) getIdleTimeXScreensaver() (time.Duration, error) {
+	cmd := exec.Command("xscreensaver-command", "-time")
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, fmt.Errorf("xscreensaver-command not available: %w", err)
+	}
+
+	// Parse output like "XScreenSaver 5.44: screen blanked since Mon Oct 21 15:30:45 2024 (00:05:23)"
+	line := strings.TrimSpace(string(output))
+	if strings.Contains(line, "screen non-blanked") {
+		return 0, nil // Screen is active
+	}
+
+	// Extract time in parentheses
+	if idx := strings.LastIndex(line, "("); idx >= 0 {
+		timeStr := line[idx+1:]
+		if idx2 := strings.Index(timeStr, ")"); idx2 >= 0 {
+			timeStr = timeStr[:idx2]
+			// Parse format like "00:05:23"
+			parts := strings.Split(timeStr, ":")
+			if len(parts) == 3 {
+				hours, _ := strconv.Atoi(parts[0])
+				minutes, _ := strconv.Atoi(parts[1])
+				seconds, _ := strconv.Atoi(parts[2])
+				return time.Duration(hours)*time.Hour +
+					time.Duration(minutes)*time.Minute +
+					time.Duration(seconds)*time.Second, nil
+			}
+		}
+	}
+
+	return 0, fmt.Errorf("could not parse xscreensaver output")
 }
 
 // newPlatformWindowManager creates a platform-specific window manager (Linux)

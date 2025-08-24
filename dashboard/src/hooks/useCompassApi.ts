@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { CurrentWorkspace, Activity, Stats, ApiInfo, AdvancedAnalytics, AppTransition, FocusPattern, EnergyMetrics } from '../types';
+import type { Activity, AdvancedAnalytics, ApiInfo, AppTransition, CurrentWorkspace, EnergyMetrics, FocusPattern, Stats } from '../types';
 
 const API_BASE = 'http://localhost:8080';
 
@@ -397,4 +397,18 @@ const deriveRealTimeMetrics = (current: CurrentWorkspace) => {
     energyLevel: Math.max(20, 100 - (contextSwitchRate * 20)), // Lower energy with more switches
     qualityScore: isHighFocus ? (contextSwitchRate < 0.3 ? 90 : 70) : 40
   };
+};
+
+export const useBufferStats = () => {
+  return useQuery({
+    queryKey: ['bufferStats'],
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE}/api/buffer-stats`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch buffer stats');
+      }
+      return response.json();
+    },
+    refetchInterval: 5000, // Refetch every 5 seconds for real-time monitoring
+  });
 };

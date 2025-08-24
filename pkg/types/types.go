@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 )
@@ -146,12 +147,34 @@ type AIConfig struct {
 	Model    string `json:"model" yaml:"model"`
 }
 
+// WindowEvent represents a window focus change event
+type WindowEvent struct {
+	Type       string    `json:"type"` // "focus", "blur", "switch"
+	Timestamp  time.Time `json:"timestamp"`
+	Window     *Window   `json:"window"`
+	PrevWindow *Window   `json:"prev_window,omitempty"`
+}
+
+// IdleState represents user idle status
+type IdleState struct {
+	IsIdle     bool          `json:"is_idle"`
+	IdleTime   time.Duration `json:"idle_time"`
+	LastActive time.Time     `json:"last_active"`
+}
+
 // WindowManager interface for platform-specific implementations
 type WindowManager interface {
 	GetActiveWindow() (*Window, error)
 	GetAllWindows() ([]*Window, error)
 	TakeScreenshot() ([]byte, error)
 	GetFocusDuration() time.Duration
+
+	// Event-driven methods for real-time tracking
+	StartEventListener(ctx context.Context, eventChan chan<- *WindowEvent) error
+	StopEventListener() error
+
+	// Idle detection
+	GetIdleState() (*IdleState, error)
 }
 
 // Rule for categorization

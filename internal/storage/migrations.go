@@ -57,7 +57,172 @@ var migrations = []string{
 	`CREATE INDEX IF NOT EXISTS idx_activities_is_active ON activities(is_active);`,
 	`CREATE INDEX IF NOT EXISTS idx_activities_app_category ON activities(app_name, category);`,
 
-	// Hourly aggregated statistics
+	// Multi-granular time-series aggregation tables
+
+	// 1-minute aggregations
+	`CREATE TABLE IF NOT EXISTS activity_minutes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		time_bucket DATETIME NOT NULL,
+		app_name TEXT NOT NULL,
+		category TEXT NOT NULL,
+		
+		total_seconds INTEGER DEFAULT 0,
+		active_seconds INTEGER DEFAULT 0,
+		activity_count INTEGER DEFAULT 0,
+		switch_count INTEGER DEFAULT 0,
+		window_count_avg REAL DEFAULT 0.0,
+		
+		first_activity_id INTEGER,
+		last_activity_id INTEGER,
+		screenshot_count INTEGER DEFAULT 0,
+		
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		
+		UNIQUE(time_bucket, app_name, category)
+	);`,
+
+	// 1-hour aggregations
+	`CREATE TABLE IF NOT EXISTS activity_hours (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		time_bucket DATETIME NOT NULL,
+		app_name TEXT NOT NULL,
+		category TEXT NOT NULL,
+		
+		total_seconds INTEGER DEFAULT 0,
+		active_seconds INTEGER DEFAULT 0,
+		activity_count INTEGER DEFAULT 0,
+		switch_count INTEGER DEFAULT 0,
+		window_count_avg REAL DEFAULT 0.0,
+		
+		first_activity_id INTEGER,
+		last_activity_id INTEGER,
+		screenshot_count INTEGER DEFAULT 0,
+		
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		
+		UNIQUE(time_bucket, app_name, category)
+	);`,
+
+	// Daily aggregations
+	`CREATE TABLE IF NOT EXISTS activity_days (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		time_bucket DATE NOT NULL,
+		app_name TEXT NOT NULL,
+		category TEXT NOT NULL,
+		
+		total_seconds INTEGER DEFAULT 0,
+		active_seconds INTEGER DEFAULT 0,
+		activity_count INTEGER DEFAULT 0,
+		switch_count INTEGER DEFAULT 0,
+		window_count_avg REAL DEFAULT 0.0,
+		
+		first_activity_id INTEGER,
+		last_activity_id INTEGER,
+		screenshot_count INTEGER DEFAULT 0,
+		
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		
+		UNIQUE(time_bucket, app_name, category)
+	);`,
+
+	// Weekly aggregations (week starting Monday)
+	`CREATE TABLE IF NOT EXISTS activity_weeks (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		time_bucket DATE NOT NULL, -- First day of the week (Monday)
+		app_name TEXT NOT NULL,
+		category TEXT NOT NULL,
+		
+		total_seconds INTEGER DEFAULT 0,
+		active_seconds INTEGER DEFAULT 0,
+		activity_count INTEGER DEFAULT 0,
+		switch_count INTEGER DEFAULT 0,
+		window_count_avg REAL DEFAULT 0.0,
+		
+		first_activity_id INTEGER,
+		last_activity_id INTEGER,
+		screenshot_count INTEGER DEFAULT 0,
+		
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		
+		UNIQUE(time_bucket, app_name, category)
+	);`,
+
+	// Monthly aggregations
+	`CREATE TABLE IF NOT EXISTS activity_months (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		time_bucket DATE NOT NULL, -- First day of the month
+		app_name TEXT NOT NULL,
+		category TEXT NOT NULL,
+		
+		total_seconds INTEGER DEFAULT 0,
+		active_seconds INTEGER DEFAULT 0,
+		activity_count INTEGER DEFAULT 0,
+		switch_count INTEGER DEFAULT 0,
+		window_count_avg REAL DEFAULT 0.0,
+		
+		first_activity_id INTEGER,
+		last_activity_id INTEGER,
+		screenshot_count INTEGER DEFAULT 0,
+		
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		
+		UNIQUE(time_bucket, app_name, category)
+	);`,
+
+	// Yearly aggregations
+	`CREATE TABLE IF NOT EXISTS activity_years (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		time_bucket INTEGER NOT NULL, -- Year as integer
+		app_name TEXT NOT NULL,
+		category TEXT NOT NULL,
+		
+		total_seconds INTEGER DEFAULT 0,
+		active_seconds INTEGER DEFAULT 0,
+		activity_count INTEGER DEFAULT 0,
+		switch_count INTEGER DEFAULT 0,
+		window_count_avg REAL DEFAULT 0.0,
+		
+		first_activity_id INTEGER,
+		last_activity_id INTEGER,
+		screenshot_count INTEGER DEFAULT 0,
+		
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		
+		UNIQUE(time_bucket, app_name, category)
+	);`,
+
+	// Indexes for aggregation tables
+	`CREATE INDEX IF NOT EXISTS idx_activity_minutes_time_bucket ON activity_minutes(time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_minutes_app ON activity_minutes(app_name, time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_minutes_category ON activity_minutes(category, time_bucket);`,
+
+	`CREATE INDEX IF NOT EXISTS idx_activity_hours_time_bucket ON activity_hours(time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_hours_app ON activity_hours(app_name, time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_hours_category ON activity_hours(category, time_bucket);`,
+
+	`CREATE INDEX IF NOT EXISTS idx_activity_days_time_bucket ON activity_days(time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_days_app ON activity_days(app_name, time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_days_category ON activity_days(category, time_bucket);`,
+
+	`CREATE INDEX IF NOT EXISTS idx_activity_weeks_time_bucket ON activity_weeks(time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_weeks_app ON activity_weeks(app_name, time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_weeks_category ON activity_weeks(category, time_bucket);`,
+
+	`CREATE INDEX IF NOT EXISTS idx_activity_months_time_bucket ON activity_months(time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_months_app ON activity_months(app_name, time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_months_category ON activity_months(category, time_bucket);`,
+
+	`CREATE INDEX IF NOT EXISTS idx_activity_years_time_bucket ON activity_years(time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_years_app ON activity_years(app_name, time_bucket);`,
+	`CREATE INDEX IF NOT EXISTS idx_activity_years_category ON activity_years(category, time_bucket);`,
+
+	// Legacy hourly stats table (kept for backward compatibility but will be deprecated)
 	`CREATE TABLE IF NOT EXISTS hourly_stats (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		hour_bucket DATETIME NOT NULL,
@@ -109,9 +274,11 @@ var migrations = []string{
 
 	// Insert default settings
 	`INSERT OR IGNORE INTO settings (key, value) VALUES 
-		('schema_version', '1'),
+		('schema_version', '2'),
 		('created_at', datetime('now')),
-		('last_cleanup', datetime('now'));`,
+		('last_cleanup', datetime('now')),
+		('last_aggregation_run', datetime('now')),
+		('aggregation_enabled', 'true');`,
 }
 
 // GetSchemaVersion returns the current schema version

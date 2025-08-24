@@ -1,0 +1,40 @@
+{
+  "manifest_version": 2,
+  "name": "Compass Activity Tracker",
+  "version": "1.0.0",
+  "description": "Track your browser tab activity with Compass for complete productivity insights",
+  
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "background",
+    "storage",
+    "webNavigation",
+    "<all_urls>"
+  ],
+  
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "Compass Activity Tracker (Firefox)"
+  },
+  
+  "applications": {
+    "gecko": {
+      "id": "compass-tracker@compass.dev",
+      "strict_min_version": "57.0"
+    }
+  }
+}

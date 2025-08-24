@@ -12,6 +12,7 @@ import (
 
 	"github.com/faisalahmedsifat/compass/internal/capture"
 	"github.com/faisalahmedsifat/compass/internal/config"
+	"github.com/faisalahmedsifat/compass/internal/daemon"
 	"github.com/faisalahmedsifat/compass/internal/processor"
 	"github.com/faisalahmedsifat/compass/internal/server"
 	"github.com/faisalahmedsifat/compass/internal/storage"
@@ -20,11 +21,11 @@ import (
 )
 
 var (
-	Version   = "0.1.0"   // Will be overridden during build
-	BuildTime = "unknown" // Will be set during build
-	GitCommit = "unknown" // Will be set during build
-	cfgFile   string
-	daemon    bool
+	Version    = "0.1.0"   // Will be overridden during build
+	BuildTime  = "unknown" // Will be set during build
+	GitCommit  = "unknown" // Will be set during build
+	cfgFile    string
+	daemonMode bool
 )
 
 func main() {
@@ -46,7 +47,9 @@ through a local web dashboard at http://localhost:8080.
 Examples:
   compass start              # Start tracking (foreground)
   compass start --daemon     # Start tracking (background)
-  compass stop               # Stop tracking
+  compass stop               # Stop daemon
+  compass restart            # Restart daemon
+  compass status             # Show daemon status
   compass stats              # View quick stats
   compass dashboard          # Open dashboard in browser`,
 	Version: Version,
@@ -68,9 +71,8 @@ var stopCmd = &cobra.Command{
 	Short: "Stop workspace tracking",
 	Long:  "Stop the background tracking process.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("🧭 Compass tracking stopped")
-		// TODO: Implement daemon process management
-		return nil
+		daemonMgr := daemon.NewDaemonManager()
+		return daemonMgr.Stop()
 	},
 }
 
@@ -114,6 +116,30 @@ var statusCmd = &cobra.Command{
 	},
 }
 
+// restartCmd restarts the daemon
+var restartCmd = &cobra.Command{
+	Use:   "restart",
+	Short: "Restart workspace tracking daemon",
+	Long:  "Restart the background tracking process.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		daemonMgr := daemon.NewDaemonManager()
+
+		// Get current executable path
+		execPath, err := os.Executable()
+		if err != nil {
+			return fmt.Errorf("failed to get executable path: %w", err)
+		}
+
+		// Prepare arguments for daemon
+		restartArgs := []string{"start"}
+		if cfgFile != "" {
+			restartArgs = append(restartArgs, "--config", cfgFile)
+		}
+
+		return daemonMgr.Restart(execPath, restartArgs)
+	},
+}
+
 // versionCmd shows detailed version information
 var versionCmd = &cobra.Command{
 	Use:   "version",
@@ -137,15 +163,16 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ~/.config/compass/config.yaml)")
 
 	// Start command flags
-	startCmd.Flags().BoolVar(&daemon, "daemon", false, "run in background")
+	startCmd.Flags().BoolVar(&daemonMode, "daemon", false, "run in background")
 
 	// Add subcommands
 	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(stopCmd)
+	rootCmd.AddCommand(restartCmd)
+	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(statsCmd)
 	rootCmd.AddCommand(dashboardCmd)
 	rootCmd.AddCommand(exportCmd)
-	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 
@@ -159,6 +186,26 @@ func initConfig() {
 
 // runTracker starts the main tracking system
 func runTracker() error {
+	daemonMgr := daemon.NewDaemonManager()
+
+	// Handle daemon mode
+	if daemonMode {
+		// Get current executable path
+		execPath, err := os.Executable()
+		if err != nil {
+			return fmt.Errorf("failed to get executable path: %w", err)
+		}
+
+		// Prepare arguments for daemon (remove --daemon flag)
+		args := []string{"start"}
+		if cfgFile != "" {
+			args = append(args, "--config", cfgFile)
+		}
+
+		return daemonMgr.Start(execPath, args)
+	}
+
+	// Regular foreground mode
 	fmt.Println("🧭 Compass v" + Version + " - Workspace Tracker")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
@@ -186,11 +233,14 @@ func runTracker() error {
 	// Create activity channel for real-time updates
 	activityChan := make(chan *types.Activity, 100)
 
-	// Create and start web server
-	webServer := server.NewServer(cfg.Server, db, activityChan)
-
-	// Create capture engine
+	// Create capture engine first
 	captureEngine := capture.NewCaptureEngine(cfg, db, categorizer, activityChan)
+
+	// Get window manager from capture engine for real-time focus duration
+	windowManager := captureEngine.GetWindowManager()
+
+	// Create and start web server with capture engine and window manager
+	webServer := server.NewServer(cfg.Server, db, captureEngine, windowManager, activityChan)
 
 	// Setup context for graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -218,13 +268,7 @@ func runTracker() error {
 	fmt.Printf("[%s] Started tracking\n", time.Now().Format("2006-01-02 15:04:05"))
 	fmt.Printf("[%s] Dashboard: http://%s:%s\n", time.Now().Format("2006-01-02 15:04:05"), cfg.Server.Host, cfg.Server.Port)
 	fmt.Printf("[%s] Capturing every %v\n", time.Now().Format("2006-01-02 15:04:05"), cfg.Tracking.Interval)
-
-	if daemon {
-		fmt.Println("Running in daemon mode. Use 'compass stop' to stop.")
-		// TODO: Implement proper daemon process management
-	} else {
-		fmt.Println("Press Ctrl+C to stop tracking")
-	}
+	fmt.Println("Press Ctrl+C to stop tracking")
 
 	// Wait for shutdown signal
 	<-sigChan
@@ -338,6 +382,20 @@ func showStatus() error {
 
 	fmt.Printf("🧭 Compass v%s Status\n", Version)
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+	// Show daemon status first
+	daemonMgr := daemon.NewDaemonManager()
+	if daemonMgr.IsRunning() {
+		pid := daemonMgr.GetPid()
+		uptime := daemonMgr.GetUptime()
+		fmt.Printf("Daemon Status: 🟢 RUNNING (PID: %d", pid)
+		if uptime > 0 {
+			fmt.Printf(", uptime: %s", formatDurationForDisplay(uptime))
+		}
+		fmt.Println(")")
+	} else {
+		fmt.Printf("Daemon Status: 🔴 STOPPED\n")
+	}
 
 	fmt.Printf("Configuration: %s\n", config.GetConfigPath())
 	fmt.Printf("Database: %s\n", cfg.Storage.Path)

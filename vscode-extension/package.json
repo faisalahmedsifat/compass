@@ -1,0 +1,104 @@
+{
+  "name": "compass-activity-tracker",
+  "displayName": "Compass Activity Tracker",
+  "description": "Track your coding activity with Compass - file switches, time spent, and productivity insights",
+  "version": "1.0.0",
+  "publisher": "compass",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Other",
+    "Analytics"
+  ],
+  "keywords": [
+    "productivity",
+    "time tracking",
+    "analytics",
+    "activity",
+    "compass"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "compass.showStats",
+        "title": "Show Compass Stats",
+        "category": "Compass"
+      },
+      {
+        "command": "compass.openDashboard",
+        "title": "Open Compass Dashboard",
+        "category": "Compass"
+      },
+      {
+        "command": "compass.toggleTracking",
+        "title": "Toggle Activity Tracking",
+        "category": "Compass"
+      }
+    ],
+    "configuration": {
+      "title": "Compass Activity Tracker",
+      "properties": {
+        "compass.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8080/api/v1",
+          "description": "Compass API endpoint URL"
+        },
+        "compass.trackKeystrokes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Track keystroke count per file"
+        },
+        "compass.trackSelections": {
+          "type": "boolean",
+          "default": true,
+          "description": "Track text selections and cursor movements"
+        },
+        "compass.minFileTime": {
+          "type": "number",
+          "default": 5,
+          "description": "Minimum seconds in a file before tracking (prevents noise)"
+        },
+        "compass.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Compass activity tracking"
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "compass.showStats"
+        },
+        {
+          "command": "compass.openDashboard"
+        },
+        {
+          "command": "compass.toggleTracking"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "echo 'No compilation needed'",
+    "watch": "echo 'No watch needed'",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "echo 'No linting configured'",
+    "test": "echo 'No tests configured'"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.60.0",
+    "@types/node": "16.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/faisalahmedsifat/compass"
+  },
+  "license": "MIT"
+}

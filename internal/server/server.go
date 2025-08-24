@@ -17,11 +17,13 @@ import (
 
 // Server provides the REST API interface for Compass
 type Server struct {
-	db       Database
-	addr     string
-	upgrader websocket.Upgrader
-	clients  map[*websocket.Conn]bool
-	clientMu sync.RWMutex
+	db            Database
+	captureEngine CaptureEngine
+	windowManager WindowManager
+	addr          string
+	upgrader      websocket.Upgrader
+	clients       map[*websocket.Conn]bool
+	clientMu      sync.RWMutex
 
 	activityChan chan *types.Activity
 	server       *http.Server
@@ -31,20 +33,41 @@ type Server struct {
 type Database interface {
 	GetActivities(from, to time.Time, limit int) ([]*types.Activity, error)
 	GetCurrentWorkspace() (*types.CurrentWorkspace, error)
+	GetCurrentWorkspaceWithFocusCalculator(focusCalculator func() time.Duration) (*types.CurrentWorkspace, error)
 	GetStats(period string, date time.Time) (*types.Stats, error)
 	GetDatabaseStats() (map[string]interface{}, error)
 	GetScreenshot(activityID int64) ([]byte, error)
+
+	// New timeline and aggregation methods
+	GetTimelineData(from, to time.Time, granularity string) (interface{}, error)
+	GetTimeSlotMatrix(from, to time.Time, granularity string) (map[time.Time]map[string]int, error)
+	GetAggregatedStats(from, to time.Time, granularity string) (*types.Stats, error)
+	GetHeatmapData(from, to time.Time, granularity string) (map[string]interface{}, error)
+	BackfillAggregations() error
+	GetAggregationStatus() (map[string]interface{}, error)
+}
+
+// CaptureEngine interface for the server
+type CaptureEngine interface {
+	GetBufferStats() map[string]interface{}
+}
+
+// WindowManager interface for the server
+type WindowManager interface {
+	GetFocusDuration() time.Duration
 }
 
 // NewServer creates a new web server
-func NewServer(config *types.ServerConfig, db Database, activityChan chan *types.Activity) *Server {
+func NewServer(config *types.ServerConfig, db Database, captureEngine CaptureEngine, windowManager WindowManager, activityChan chan *types.Activity) *Server {
 	addr := fmt.Sprintf("%s:%s", config.Host, config.Port)
 
 	return &Server{
-		db:           db,
-		addr:         addr,
-		clients:      make(map[*websocket.Conn]bool),
-		activityChan: activityChan,
+		db:            db,
+		captureEngine: captureEngine,
+		windowManager: windowManager,
+		addr:          addr,
+		clients:       make(map[*websocket.Conn]bool),
+		activityChan:  activityChan,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// Allow connections from localhost
@@ -64,7 +87,21 @@ func (s *Server) Start(ctx context.Context) error {
 	mux.HandleFunc("/api/current", s.withCORS(s.handleCurrent))
 	mux.HandleFunc("/api/export", s.withCORS(s.handleExport))
 	mux.HandleFunc("/api/health", s.withCORS(s.handleHealth))
+	mux.HandleFunc("/api/buffer-stats", s.withCORS(s.handleBufferStats))
 	mux.HandleFunc("/api/screenshot/", s.withCORS(s.handleScreenshot))
+
+	// New timeline and aggregation endpoints
+	mux.HandleFunc("/api/timeline/", s.withCORS(s.HandleTimelineRouting))
+	mux.HandleFunc("/api/admin/backfill", s.withCORS(s.HandleBackfillAggregations))
+	mux.HandleFunc("/api/admin/aggregation-status", s.withCORS(s.HandleAggregationStatus))
+
+	// Browser extension endpoints
+	mux.HandleFunc("/api/v1/events/browser", s.withCORS(s.handleBrowserEvent))
+	mux.HandleFunc("/api/v1/events/page-activity", s.withCORS(s.handlePageActivity))
+	mux.HandleFunc("/api/v1/health", s.withCORS(s.handleHealth))
+
+	// Editor extension endpoints
+	mux.HandleFunc("/api/v1/events/editor", s.withCORS(s.handleEditorEvent))
 
 	// WebSocket for real-time updates
 	mux.HandleFunc("/ws", s.handleWebSocket)
@@ -82,13 +119,17 @@ func (s *Server) Start(ctx context.Context) error {
 
 	log.Printf("Compass API server running on http://%s", s.addr)
 	log.Printf("Available endpoints:")
-	log.Printf("  GET  /api/health       - Server health check")
-	log.Printf("  GET  /api/current      - Current workspace state")
-	log.Printf("  GET  /api/activities   - Activity history")
-	log.Printf("  GET  /api/stats        - Workspace statistics")
-	log.Printf("  GET  /api/export       - Export data")
-	log.Printf("  GET  /api/screenshot/* - Activity screenshots")
-	log.Printf("  WS   /ws               - Real-time updates")
+	log.Printf("  GET  /api/health           - Server health check")
+	log.Printf("  GET  /api/current          - Current workspace state")
+	log.Printf("  GET  /api/activities       - Activity history")
+	log.Printf("  GET  /api/stats            - Workspace statistics")
+	log.Printf("  GET  /api/buffer-stats     - Activity buffer statistics")
+	log.Printf("  GET  /api/export           - Export data")
+	log.Printf("  GET  /api/screenshot/*     - Activity screenshots")
+	log.Printf("  POST /api/v1/events/browser     - Browser tab events")
+	log.Printf("  POST /api/v1/events/page-activity - Page activity events")
+	log.Printf("  POST /api/v1/events/editor      - Editor file events")
+	log.Printf("  WS   /ws                   - Real-time updates")
 
 	// Start server in goroutine
 	go func() {
@@ -204,7 +245,13 @@ func (s *Server) handleCurrent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	current, err := s.db.GetCurrentWorkspace()
+	// Get current workspace with real-time focus duration
+	current, err := s.db.GetCurrentWorkspaceWithFocusCalculator(func() time.Duration {
+		if s.windowManager != nil {
+			return s.windowManager.GetFocusDuration()
+		}
+		return 0
+	})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get current workspace: %v", err), http.StatusInternalServerError)
 		return
@@ -486,4 +533,254 @@ func (s *Server) handleCORS(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(info)
+}
+
+// handleBrowserEvent handles browser tab events from the extension
+func (s *Server) handleBrowserEvent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var event struct {
+		Type      string `json:"type"`
+		Timestamp string `json:"timestamp"`
+		EventType string `json:"event_type"`
+		Tab       struct {
+			ID         int    `json:"id"`
+			URL        string `json:"url"`
+			Title      string `json:"title"`
+			FavIconURL string `json:"favIconUrl"`
+			WindowID   int    `json:"windowId"`
+			Index      int    `json:"index"`
+			Pinned     bool   `json:"pinned"`
+		} `json:"tab"`
+		DurationMs int    `json:"duration_ms"`
+		Browser    string `json:"browser"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Parse timestamp
+	timestamp, err := time.Parse(time.RFC3339, event.Timestamp)
+	if err != nil {
+		timestamp = time.Now()
+	}
+
+	// Create an activity record for the browser tab
+	activity := &types.Activity{
+		Timestamp:     timestamp,
+		AppName:       strings.Title(event.Browser),
+		WindowTitle:   event.Tab.Title,
+		ProcessID:     0, // Browser extension doesn't have PID
+		IsActive:      event.EventType == "switch",
+		FocusDuration: event.DurationMs / 1000, // Convert to seconds
+		TotalWindows:  1,
+		AllWindows: []types.Window{
+			{
+				AppName:   strings.Title(event.Browser),
+				Title:     event.Tab.Title,
+				ProcessID: 0,
+				IsActive:  event.EventType == "switch",
+			},
+		},
+		Category:   "Browser",
+		Confidence: 1.0,
+	}
+
+	// Send to activity channel for real-time processing
+	select {
+	case s.activityChan <- activity:
+		log.Printf("Browser event received: %s - %s (%s)", event.EventType, event.Tab.Title, event.Tab.URL)
+	default:
+		log.Printf("Activity channel full, dropping browser event")
+	}
+
+	// Respond with success
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Browser event received",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// handlePageActivity handles page activity events from the extension
+func (s *Server) handlePageActivity(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var activity struct {
+		Type      string `json:"type"`
+		Timestamp string `json:"timestamp"`
+		URL       string `json:"url"`
+		Title     string `json:"title"`
+		Domain    string `json:"domain"`
+		Activity  struct {
+			ScrollDepth  int `json:"scrollDepth"`
+			TotalScrolls int `json:"totalScrolls"`
+			Clicks       int `json:"clicks"`
+			Keystrokes   int `json:"keystrokes"`
+			TimeActive   int `json:"timeActive"`
+			ReadingTime  int `json:"readingTime"`
+		} `json:"activity"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&activity); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Page activity received: %s - scrolled %d%%, %d clicks, %d keystrokes",
+		activity.Domain, activity.Activity.ScrollDepth, activity.Activity.Clicks, activity.Activity.Keystrokes)
+
+	// For now, just log the page activity
+	// In the future, this could be stored in a separate table for detailed analytics
+
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Page activity received",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleEditorEvent handles editor file events from VS Code/Cursor extension
+func (s *Server) handleEditorEvent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var event struct {
+		Type      string `json:"type"`
+		Timestamp string `json:"timestamp"`
+		EventType string `json:"event_type,omitempty"`
+		File      struct {
+			FileName        string `json:"fileName"`
+			LanguageID      string `json:"languageId"`
+			LineCount       int    `json:"lineCount"`
+			IsUntitled      bool   `json:"isUntitled"`
+			WorkspaceFolder struct {
+				Name string `json:"name"`
+				URI  string `json:"uri"`
+			} `json:"workspaceFolder"`
+		} `json:"file,omitempty"`
+		DurationMs int `json:"duration_ms,omitempty"`
+		Keystrokes int `json:"keystrokes,omitempty"`
+		Selections int `json:"selections,omitempty"`
+		Lines      int `json:"lines,omitempty"`
+		Editor     struct {
+			Name     string `json:"name"`
+			Version  string `json:"version"`
+			Language string `json:"language"`
+			Theme    string `json:"theme"`
+			Platform string `json:"platform"`
+		} `json:"editor"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Parse timestamp
+	timestamp, err := time.Parse(time.RFC3339, event.Timestamp)
+	if err != nil {
+		timestamp = time.Now()
+	}
+
+	// Create an activity record for the editor file
+	var activity *types.Activity
+
+	if event.Type == "file_activity" || event.Type == "file_event" {
+		// Extract filename for display
+		fileName := event.File.FileName
+		if event.File.FileName != "" {
+			// Get just the filename from the full path
+			parts := strings.Split(event.File.FileName, "/")
+			if len(parts) > 0 {
+				fileName = parts[len(parts)-1]
+			}
+			// Also try Windows path separator
+			parts = strings.Split(fileName, "\\")
+			if len(parts) > 0 {
+				fileName = parts[len(parts)-1]
+			}
+		}
+
+		// Create window title with file and editor info
+		windowTitle := fileName
+		if event.File.LanguageID != "" {
+			windowTitle = fmt.Sprintf("%s (%s)", fileName, event.File.LanguageID)
+		}
+
+		activity = &types.Activity{
+			Timestamp:     timestamp,
+			AppName:       event.Editor.Name,
+			WindowTitle:   windowTitle,
+			ProcessID:     0, // Extension doesn't have access to PID
+			IsActive:      event.EventType == "switch" || event.Type == "file_activity",
+			FocusDuration: event.DurationMs / 1000, // Convert to seconds
+			TotalWindows:  1,
+			AllWindows: []types.Window{
+				{
+					AppName:   event.Editor.Name,
+					Title:     windowTitle,
+					ProcessID: 0,
+					IsActive:  event.EventType == "switch" || event.Type == "file_activity",
+				},
+			},
+			Category:   fmt.Sprintf("Development - %s", strings.Title(event.File.LanguageID)),
+			Confidence: 1.0,
+		}
+
+		// Send to activity channel for real-time processing
+		select {
+		case s.activityChan <- activity:
+			log.Printf("Editor event received: %s - %s (keystrokes: %d, selections: %d)",
+				event.EventType, fileName, event.Keystrokes, event.Selections)
+		default:
+			log.Printf("Activity channel full, dropping editor event")
+		}
+	} else {
+		// Log other event types (workspace changes, etc.)
+		log.Printf("Editor event received: %s - %s", event.Type, event.EventType)
+	}
+
+	// Respond with success
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Editor event received",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleBufferStats handles requests for activity buffer statistics
+func (s *Server) handleBufferStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var stats map[string]interface{}
+	if s.captureEngine != nil {
+		stats = s.captureEngine.GetBufferStats()
+	} else {
+		stats = map[string]interface{}{
+			"error": "Capture engine not available",
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
 }
