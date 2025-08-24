@@ -55,50 +55,6 @@ const ActivitySessionContext: React.FC<ActivitySessionContextProps> = ({
     return '🔧';
   };
 
-  // Group activities into work sessions
-  const workSessions = useMemo(() => {
-    if (!activities.length) return [];
-
-    const sortedActivities = [...activities].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
-
-    const sessions: WorkSession[] = [];
-    let currentSessionActivities: Activity[] = [];
-    let sessionStartTime = new Date(sortedActivities[0].timestamp);
-    
-    const SESSION_GAP_THRESHOLD = 15 * 60 * 1000; // 15 minutes gap = new session
-
-    sortedActivities.forEach((activity, index) => {
-      const activityTime = new Date(activity.timestamp);
-      const prevActivity = sortedActivities[index - 1];
-      
-      // Start a new session if there's a significant gap or it's the first activity
-      const shouldStartNewSession = prevActivity && 
-        (activityTime.getTime() - new Date(prevActivity.timestamp).getTime()) > SESSION_GAP_THRESHOLD;
-
-      if (shouldStartNewSession && currentSessionActivities.length > 0) {
-        // Close current session
-        const session = createWorkSession(currentSessionActivities, sessionStartTime);
-        if (session) sessions.push(session);
-        
-        // Start new session
-        currentSessionActivities = [activity];
-        sessionStartTime = activityTime;
-      } else {
-        currentSessionActivities.push(activity);
-      }
-    });
-
-    // Don't forget the last session
-    if (currentSessionActivities.length > 0) {
-      const session = createWorkSession(currentSessionActivities, sessionStartTime);
-      if (session) sessions.push(session);
-    }
-
-    return sessions.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
-  }, [activities, targetTime]);
-
   const createWorkSession = (sessionActivities: Activity[], startTime: Date): WorkSession | null => {
     if (sessionActivities.length === 0) return null;
 
@@ -199,6 +155,50 @@ const ActivitySessionContext: React.FC<ActivitySessionContextProps> = ({
       isTargetSession
     };
   };
+
+  // Group activities into work sessions
+  const workSessions = useMemo(() => {
+    if (!activities.length) return [];
+
+    const sortedActivities = [...activities].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    const sessions: WorkSession[] = [];
+    let currentSessionActivities: Activity[] = [];
+    let sessionStartTime = new Date(sortedActivities[0].timestamp);
+    
+    const SESSION_GAP_THRESHOLD = 15 * 60 * 1000; // 15 minutes gap = new session
+
+    sortedActivities.forEach((activity, index) => {
+      const activityTime = new Date(activity.timestamp);
+      const prevActivity = sortedActivities[index - 1];
+      
+      // Start a new session if there's a significant gap or it's the first activity
+      const shouldStartNewSession = prevActivity && 
+        (activityTime.getTime() - new Date(prevActivity.timestamp).getTime()) > SESSION_GAP_THRESHOLD;
+
+      if (shouldStartNewSession && currentSessionActivities.length > 0) {
+        // Close current session
+        const session = createWorkSession(currentSessionActivities, sessionStartTime);
+        if (session) sessions.push(session);
+        
+        // Start new session
+        currentSessionActivities = [activity];
+        sessionStartTime = activityTime;
+      } else {
+        currentSessionActivities.push(activity);
+      }
+    });
+
+    // Don't forget the last session
+    if (currentSessionActivities.length > 0) {
+      const session = createWorkSession(currentSessionActivities, sessionStartTime);
+      if (session) sessions.push(session);
+    }
+
+    return sessions.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+  }, [activities, targetTime, createWorkSession]);
 
   const getSessionIcon = (sessionType: string): string => {
     switch (sessionType) {

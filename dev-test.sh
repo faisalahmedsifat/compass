@@ -28,6 +28,6 @@ echo "───────────────────"
 cd dashboard
 npm run lint || echo "❌ Frontend linting failed"
 cd ..
-
+        
 echo ""
 echo "✅ Test suite complete!"

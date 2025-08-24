@@ -97,45 +97,50 @@ const ProductivityInsights: React.FC<ProductivityInsightsProps> = ({ insights, a
       const morningFocus = analytics.focusPatterns.filter(p => p.hour >= 9 && p.hour <= 11);
       const afternoonFocus = analytics.focusPatterns.filter(p => p.hour >= 14 && p.hour <= 16);
       
-      const avgMorningFocus = morningFocus.reduce((sum, p) => sum + p.focusScore, 0) / morningFocus.length;
-      const avgAfternoonFocus = afternoonFocus.reduce((sum, p) => sum + p.focusScore, 0) / afternoonFocus.length;
-      
-      if (avgMorningFocus > avgAfternoonFocus + 20) {
-        additionalInsights.push({
-          type: 'optimization' as const,
-          title: 'Morning Focus Advantage',
-          description: `Morning focus is ${(avgMorningFocus - avgAfternoonFocus).toFixed(0)}% higher. Schedule complex tasks before noon.`,
-          impact: 'medium' as const,
-          category: 'Scheduling'
-        });
+      if (morningFocus.length > 0 && afternoonFocus.length > 0) {
+        const avgMorningFocus = morningFocus.reduce((sum, p) => sum + p.focusScore, 0) / morningFocus.length;
+        const avgAfternoonFocus = afternoonFocus.reduce((sum, p) => sum + p.focusScore, 0) / afternoonFocus.length;
+        
+        if (avgMorningFocus > avgAfternoonFocus + 20) {
+          additionalInsights.push({
+            type: 'optimization' as const,
+            title: 'Morning Focus Advantage',
+            description: `Morning focus is ${(avgMorningFocus - avgAfternoonFocus).toFixed(0)}% higher. Schedule complex tasks before noon.`,
+            impact: 'medium' as const,
+            category: 'Scheduling'
+          });
+        }
       }
     }
 
     // Weekly trend insights
     if (analytics.weeklyTrend.length > 0) {
       const weekdays = analytics.weeklyTrend.filter(d => !['Sat', 'Sun'].includes(d.day));
-      const avgEfficiency = weekdays.reduce((sum, d) => sum + d.efficiency, 0) / weekdays.length;
-      const bestDay = weekdays.reduce((best, current) => current.efficiency > best.efficiency ? current : best);
-      const worstDay = weekdays.reduce((worst, current) => current.efficiency < worst.efficiency ? current : worst);
       
-      if (bestDay.efficiency - worstDay.efficiency > 30) {
-        additionalInsights.push({
-          type: 'pattern' as const,
-          title: 'Weekly Performance Variance',
-          description: `${bestDay.day} outperforms ${worstDay.day} by ${(bestDay.efficiency - worstDay.efficiency).toFixed(0)}%. Analyze what makes ${bestDay.day} effective.`,
-          impact: 'medium' as const,
-          category: 'Patterns'
-        });
-      }
+      if (weekdays.length > 0) {
+        const avgEfficiency = weekdays.reduce((sum, d) => sum + d.efficiency, 0) / weekdays.length;
+        const bestDay = weekdays.reduce((best, current) => current.efficiency > best.efficiency ? current : best);
+        const worstDay = weekdays.reduce((worst, current) => current.efficiency < worst.efficiency ? current : worst);
+        
+        if (bestDay.efficiency - worstDay.efficiency > 30) {
+          additionalInsights.push({
+            type: 'pattern' as const,
+            title: 'Weekly Performance Variance',
+            description: `${bestDay.day} outperforms ${worstDay.day} by ${(bestDay.efficiency - worstDay.efficiency).toFixed(0)}%. Analyze what makes ${bestDay.day} effective.`,
+            impact: 'medium' as const,
+            category: 'Patterns'
+          });
+        }
 
-      if (avgEfficiency > 90) {
-        additionalInsights.push({
-          type: 'pattern' as const,
-          title: 'Exceptional Weekly Performance',
-          description: `Outstanding ${avgEfficiency.toFixed(0)}% average efficiency. You're in the top 5% of performers!`,
-          impact: 'low' as const,
-          category: 'Achievement'
-        });
+        if (avgEfficiency > 90) {
+          additionalInsights.push({
+            type: 'pattern' as const,
+            title: 'Exceptional Weekly Performance',
+            description: `Outstanding ${avgEfficiency.toFixed(0)}% average efficiency. You're in the top 5% of performers!`,
+            impact: 'low' as const,
+            category: 'Achievement'
+          });
+        }
       }
     }
 

@@ -78,15 +78,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ isLoading }) => {
           granularity: 'minute' as const // Use minute granularity for hour view
         };
       case 'day': {
-        // Use a wider time range to ensure we capture data
+        // Focus on the selected day only
         const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
         const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
-        
-        // If it's today, extend the range to include recent hours
-        if (date.toDateString() === new Date().toDateString()) {
-          dayStart.setDate(dayStart.getDate() - 1); // Include yesterday
-          dayEnd.setDate(dayEnd.getDate() + 1); // Include tomorrow
-        }
         
         console.log('📅 Day view time range:', {
           from: dayStart.toISOString(),

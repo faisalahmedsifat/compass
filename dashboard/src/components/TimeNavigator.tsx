@@ -277,7 +277,7 @@ const TimeNavigator: React.FC<TimeNavigatorProps> = ({
               <div className="text-xs text-indigo-600 font-medium">
                 Timeline (±1 hour context)
               </div>
-              {contextActivities.slice(0, 5).map((activity, _) => (
+              {contextActivities.slice(0, 5).map((activity) => (
                 <div key={activity.id} className="flex items-center gap-3 text-xs">
                   <div className="text-indigo-500 min-w-[50px]">
                     {new Date(activity.timestamp).toLocaleTimeString('en-US', {

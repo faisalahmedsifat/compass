@@ -75,10 +75,10 @@ export const useTimelineSlots = (
   to?: Date, 
   granularity: 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' = 'hour'
 ) => {
-  // If no time range provided, use a recent range that likely has data
-  // Based on the debug info, data exists at 2025-08-23T20:00:00Z
-  const defaultFrom = from || new Date('2025-08-23T19:00:00Z'); // Start 1 hour before known data
-  const defaultTo = to || new Date('2025-08-23T22:00:00Z');     // End 2 hours after known data
+  // If no time range provided, use the last 24 hours as a reasonable default
+  const now = new Date();
+  const defaultFrom = from || new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+  const defaultTo = to || now; // Current time
   return useQuery<{
     success: boolean;
     data: TimeSlotSummary[];
@@ -142,7 +142,7 @@ export const useTimeSlotDetails = (
       params.set('from', timeSlot);
       
       // Calculate 'to' based on granularity
-      let toDate = new Date(timeSlotDate);
+      const toDate = new Date(timeSlotDate);
       switch (granularity) {
         case 'minute':
           toDate.setMinutes(toDate.getMinutes() + 1);
@@ -402,7 +402,7 @@ export const useCustomTimeRange = (viewMode: 'minute' | 'hour' | 'day' | 'week' 
           granularity: 'hour' as const
         };
       
-      case 'week':
+      case 'week': {
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
         weekStart.setHours(0, 0, 0, 0);
@@ -414,6 +414,7 @@ export const useCustomTimeRange = (viewMode: 'minute' | 'hour' | 'day' | 'week' 
           to: weekEnd,
           granularity: 'day' as const
         };
+      }
       
       case 'month':
         return {
