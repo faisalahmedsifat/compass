@@ -34,6 +34,26 @@ type TimelineMetadata struct {
 	ScreenshotCount int `json:"screenshot_count"`
 }
 
+// getBucketDurationSeconds returns the duration in seconds for a granularity bucket
+func getBucketDurationSeconds(granularity string) int {
+	switch granularity {
+	case "minute":
+		return 60
+	case "hour":
+		return 3600
+	case "day":
+		return 24 * 3600
+	case "week":
+		return 7 * 24 * 3600
+	case "month":
+		return 30 * 24 * 3600 // Approximate
+	case "year":
+		return 365 * 24 * 3600 // Approximate
+	default:
+		return 3600 // Default to hour
+	}
+}
+
 // GetTimelineData efficiently retrieves pre-aggregated timeline data
 func (d *Database) GetTimelineData(from, to time.Time, granularity string) (interface{}, error) {
 	// Map granularity string to TimeGranularity
@@ -107,15 +127,34 @@ func (d *Database) GetTimelineData(from, to time.Time, granularity string) (inte
 			}
 		}
 
-		// Update totals
-		dataPoint.TotalTime += record.TotalSeconds
+		// Don't sum app times for total - that causes overlapping time issues
+		// Total time should be capped at the bucket duration, not sum of all apps
 		dataPoint.Metadata.TotalActivities += record.ActivityCount
 		dataPoint.Metadata.ScreenshotCount += record.ScreenshotCount
 		dataPoint.Metadata.TotalApps++
 	}
 
-	// Calculate percentages and count categories
+	// Calculate correct total time and percentages
 	for _, dataPoint := range bucketMap {
+		// Calculate proper total time - should be bucket duration, not sum of apps
+		bucketDurationSeconds := getBucketDurationSeconds(granularity)
+
+		// Calculate actual total time from the time span covered by activities
+		// Don't cap individual app times - they represent actual usage within the slot
+		actualTotalTime := 0
+
+		// The total time should be based on the time span, not sum or max of apps
+		// For now, we'll use the bucket duration if any activity exists
+		if len(dataPoint.AppBreakdown) > 0 {
+			// The slot total should be the time span covered, capped at bucket duration
+			actualTotalTime = bucketDurationSeconds
+
+			// Individual apps should not be capped at bucket duration
+			// They represent their actual usage time which can be concurrent
+		}
+
+		dataPoint.TotalTime = actualTotalTime
+
 		categorySet := make(map[string]bool)
 		for appName := range dataPoint.AppBreakdown {
 			appSummary := dataPoint.AppBreakdown[appName]

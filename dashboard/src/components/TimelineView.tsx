@@ -198,19 +198,24 @@ const TimelineView: React.FC<TimelineViewProps> = ({ isLoading }) => {
       return {};
     }
 
-    const data: { [key: string]: TimelineEntry[] } = {};
+    const data: { [key: string]: { entries: TimelineEntry[], slotTotalTime: number } } = {};
     
     timelineSlotsQuery.data.data.forEach(slot => {
       const timeKey = formatTimeSlotKey(slot.time_slot, viewMode);
       console.log('🕐 Processing slot:', { slot, timeKey, viewMode });
       
       if (!data[timeKey]) {
-        data[timeKey] = [];
+        // For minute-level data in hour view, aggregate multiple minute slots
+        // Each visual slot represents 5 minutes, so sum up 5 minute records
+        data[timeKey] = { entries: [], slotTotalTime: 0 };
       }
+      
+      // Add this slot's time to the total (for 5-minute visual grouping)
+      data[timeKey].slotTotalTime += slot.total_time;
 
       // Convert app breakdown to timeline entries
       Object.entries(slot.app_breakdown).forEach(([appName, appData]) => {
-        data[timeKey].push({
+        data[timeKey].entries.push({
           time: timeKey,
           fullTime: new Date(slot.time_slot),
           app: appName,
@@ -269,7 +274,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ isLoading }) => {
   };
 
   const generateHoverData = (timeKey: string): HoverData => {
-    const entries = timelineData[timeKey] || [];
+    const slotData = timelineData[timeKey];
+    const entries = slotData?.entries || [];
+    const slotTotalTime = slotData?.slotTotalTime || 0;
     const appStats: { [key: string]: { 
       duration: number; 
       titles: Set<string>; 
@@ -277,7 +284,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ isLoading }) => {
       activities: Activity[];
     } } = {};
     
-    let totalTime = 0;
+    // Use the slot's total time from API instead of summing activities
+    const totalTime = slotTotalTime;
     const timeSlotActivities: Activity[] = [];
 
     // Use the already processed timeline entries to build app stats
@@ -309,7 +317,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ isLoading }) => {
       appStats[activity.app_name].duration += activity.focus_duration;
       appStats[activity.app_name].titles.add(activity.window_title);
       appStats[activity.app_name].activities.push(activity);
-      totalTime += activity.focus_duration;
+      // Don't sum activities for totalTime - use slot total instead
     });
 
     const apps = Object.entries(appStats)
@@ -470,7 +478,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ isLoading }) => {
   };
 
   const renderTimeSlot = (timeKey: string) => {
-    const entries = timelineData[timeKey] || [];
+    const slotData = timelineData[timeKey];
+    const entries = slotData?.entries || [];
+    const slotTotalTime = slotData?.slotTotalTime || 0;
     const hasActivity = entries.length > 0;
     
     if (!hasActivity) {
@@ -496,7 +506,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ isLoading }) => {
     const dominantApp = Object.entries(appDurations)
       .sort(([, a], [, b]) => b - a)[0]?.[0];
 
-    const totalDuration = Object.values(appDurations).reduce((sum, duration) => sum + duration, 0);
+    // Use the slot's actual total time from the API (not calculated from apps)
+    const totalDuration = slotTotalTime;
     const intensity = entries.reduce((sum, entry) => sum + entry.intensity, 0) / entries.length;
 
     const getIntensityColor = (intensity: number) => {

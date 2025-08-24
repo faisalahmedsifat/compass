@@ -156,6 +156,41 @@ var versionCmd = &cobra.Command{
 	},
 }
 
+var backfillCmd = &cobra.Command{
+	Use:   "backfill",
+	Short: "Backfill aggregation data",
+	Long:  "Reprocess activities to populate aggregation tables for timeline views.",
+	Run: func(cmd *cobra.Command, args []string) {
+		cfg, err := config.Load()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to load config: %v\n", err)
+			os.Exit(1)
+		}
+
+		db, err := storage.NewDatabase(cfg.Storage.Path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to open database: %v\n", err)
+			os.Exit(1)
+		}
+		defer db.Close()
+
+		// Get date range for backfill (last 7 days)
+		to := time.Now()
+		from := to.Add(-7 * 24 * time.Hour)
+
+		fmt.Printf("🧭 Starting aggregation backfill...\n")
+		fmt.Printf("Time range: %s to %s\n", from.Format("2006-01-02 15:04:05"), to.Format("2006-01-02 15:04:05"))
+
+		engine := storage.NewAggregationEngine(db)
+		if err := engine.BackfillAggregations(from, to); err != nil {
+			fmt.Fprintf(os.Stderr, "Backfill failed: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("✅ Aggregation backfill completed successfully!\n")
+	},
+}
+
 func init() {
 	cobra.OnInitialize(initConfig)
 
@@ -173,6 +208,7 @@ func init() {
 	rootCmd.AddCommand(statsCmd)
 	rootCmd.AddCommand(dashboardCmd)
 	rootCmd.AddCommand(exportCmd)
+	rootCmd.AddCommand(backfillCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 
