@@ -139,18 +139,17 @@ func (d *Database) GetTimelineData(from, to time.Time, granularity string) (inte
 		// Calculate proper total time - should be bucket duration, not sum of apps
 		bucketDurationSeconds := getBucketDurationSeconds(granularity)
 
-		// Calculate actual total time from the time span covered by activities
-		// Don't cap individual app times - they represent actual usage within the slot
+		// Calculate actual total time as sum of all app focused time
 		actualTotalTime := 0
 
-		// The total time should be based on the time span, not sum or max of apps
-		// For now, we'll use the bucket duration if any activity exists
-		if len(dataPoint.AppBreakdown) > 0 {
-			// The slot total should be the time span covered, capped at bucket duration
-			actualTotalTime = bucketDurationSeconds
+		for appName := range dataPoint.AppBreakdown {
+			appSummary := dataPoint.AppBreakdown[appName]
+			actualTotalTime += appSummary.TotalTime
+		}
 
-			// Individual apps should not be capped at bucket duration
-			// They represent their actual usage time which can be concurrent
+		// Cap total time at bucket duration to prevent impossible values
+		if actualTotalTime > bucketDurationSeconds {
+			actualTotalTime = bucketDurationSeconds
 		}
 
 		dataPoint.TotalTime = actualTotalTime
