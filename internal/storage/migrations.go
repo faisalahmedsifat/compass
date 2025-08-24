@@ -222,23 +222,6 @@ var migrations = []string{
 	`CREATE INDEX IF NOT EXISTS idx_activity_years_app ON activity_years(app_name, time_bucket);`,
 	`CREATE INDEX IF NOT EXISTS idx_activity_years_category ON activity_years(category, time_bucket);`,
 
-	// Legacy hourly stats table (kept for backward compatibility but will be deprecated)
-	`CREATE TABLE IF NOT EXISTS hourly_stats (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		hour_bucket DATETIME NOT NULL,
-		app_name TEXT NOT NULL,
-		category TEXT NOT NULL,
-		
-		total_seconds INTEGER DEFAULT 0,
-		active_seconds INTEGER DEFAULT 0,
-		background_seconds INTEGER DEFAULT 0,
-		
-		switch_count INTEGER DEFAULT 0,
-		window_count_avg REAL DEFAULT 0,
-		
-		UNIQUE(hour_bucket, app_name, category)
-	);`,
-
 	// Window patterns table
 	`CREATE TABLE IF NOT EXISTS window_patterns (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,

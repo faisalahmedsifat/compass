@@ -24,7 +24,7 @@ import DataDebugger from './DataDebugger';
 import EnergyProductivityScatter from './EnergyProductivityScatter';
 import FlowStateIndicator from './FlowStateIndicator';
 import FocusHeatmap from './FocusHeatmap';
-import OptimizedTimelineView from './OptimizedTimelineView';
+
 import ProductivityInsights from './ProductivityInsights';
 import ScreenshotGallery from './ScreenshotGallery';
 import StatsCard from './StatsCard';
@@ -35,7 +35,7 @@ import WelcomeModal from './WelcomeModal';
 
 const Dashboard: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('day');
-  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'insights' | 'timeline' | 'optimized-timeline' | 'timetravel' | 'admin'>('overview');
+  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'insights' | 'timeline' | 'timetravel' | 'admin'>('overview');
   const [selectedDate] = useState(new Date());
   const [showWelcome, setShowWelcome] = useState(() => {
     // Show welcome modal if user hasn't seen the latest version
@@ -85,7 +85,7 @@ const Dashboard: React.FC = () => {
             {/* Navigation and Controls */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div className="flex gap-2 flex-wrap">
-                {(['overview', 'timeline', 'optimized-timeline', 'timetravel', 'analytics', 'insights', 'admin'] as const).map((view) => (
+                {(['overview', 'timeline', 'timetravel', 'analytics', 'insights', 'admin'] as const).map((view) => (
                   <button
                     key={view}
                     onClick={() => setSelectedView(view)}
@@ -97,13 +97,11 @@ const Dashboard: React.FC = () => {
                   >
                     {view === 'overview' && <BarChart3 className="w-4 h-4" />}
                     {view === 'timeline' && <Calendar className="w-4 h-4" />}
-                    {view === 'optimized-timeline' && <Zap className="w-4 h-4" />}
                     {view === 'timetravel' && <Clock className="w-4 h-4" />}
                     {view === 'analytics' && <TrendingUp className="w-4 h-4" />}
                     {view === 'insights' && <Brain className="w-4 h-4" />}
                     {view === 'admin' && <Database className="w-4 h-4" />}
                     {view === 'timetravel' ? 'Time Travel' : 
-                     view === 'optimized-timeline' ? 'Optimized Timeline' :
                      view === 'admin' ? 'Admin' :
                      view.charAt(0).toUpperCase() + view.slice(1)}
                   </button>
@@ -354,28 +352,6 @@ const Dashboard: React.FC = () => {
                 <AppTransitionAnalysis data={appTransitions} isLoading={transitionsLoading} />
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Optimized Timeline Tab */}
-        {selectedView === 'optimized-timeline' && (
-          <div className="space-y-8">
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
-              <div className="flex items-center gap-3 mb-4">
-                <Zap className="w-6 h-6 text-green-600" />
-                <h3 className="text-xl font-semibold text-green-900">⚡ Multi-Granular Timeline System</h3>
-              </div>
-              <div className="text-green-800">
-                <p>🚀 <strong>100-300x Faster Performance:</strong> This timeline uses pre-aggregated data across 6 granularities (minute → year) for instant rendering.</p>
-                <p className="mt-2">Features: Pre-computed aggregations • Multi-granular views • Real-time updates • Server-side processing</p>
-                <p className="mt-2 text-sm">💡 Compare with the regular Timeline tab to see the dramatic performance improvement!</p>
-              </div>
-            </div>
-
-            <OptimizedTimelineView 
-              selectedPeriod={selectedPeriod}
-              selectedDate={selectedDate}
-            />
           </div>
         )}
 

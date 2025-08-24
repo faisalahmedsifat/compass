@@ -73,19 +73,6 @@ type Pattern struct {
 	Category       string        `json:"category"`
 }
 
-// HourlyStats for aggregated data
-type HourlyStats struct {
-	ID                int64     `json:"id"`
-	HourBucket        time.Time `json:"hour_bucket"`
-	AppName           string    `json:"app_name"`
-	Category          string    `json:"category"`
-	TotalSeconds      int       `json:"total_seconds"`
-	ActiveSeconds     int       `json:"active_seconds"`
-	BackgroundSeconds int       `json:"background_seconds"`
-	SwitchCount       int       `json:"switch_count"`
-	WindowCountAvg    float64   `json:"window_count_avg"`
-}
-
 // Session represents a user session
 type Session struct {
 	ID              int64     `json:"id"`
