@@ -328,54 +328,7 @@ export const useAggregationStatus = () => {
   });
 };
 
-// Utility hook to get time ranges for different views
-export const useTimeRanges = () => {
-  const now = new Date();
-  
-  return {
-    // Current hour
-    thisHour: {
-      from: new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0),
-      to: new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0)
-    },
-    
-    // Current day
-    today: {
-      from: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0),
-      to: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
-    },
-    
-    // Yesterday
-    yesterday: {
-      from: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0),
-      to: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59)
-    },
-    
-    // Current week
-    thisWeek: {
-      from: new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay(), 0, 0, 0),
-      to: new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() + 6, 23, 59, 59)
-    },
-    
-    // Current month
-    thisMonth: {
-      from: new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0),
-      to: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-    },
-    
-    // Last 7 days
-    last7Days: {
-      from: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
-      to: now
-    },
-    
-    // Last 30 days  
-    last30Days: {
-      from: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
-      to: now
-    }
-  };
-};
+
 
 // Hook for custom time range queries
 export const useCustomTimeRange = (viewMode: 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year', date: Date) => {
@@ -456,61 +409,9 @@ export const useCustomTimeRange = (viewMode: 'minute' | 'hour' | 'day' | 'week' 
   };
 };
 
-// Hook to get timeline heatmap data
-export const useTimelineHeatmap = (
-  from?: Date, 
-  to?: Date, 
-  granularity: 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' = 'hour'
-) => {
-  return useQuery<{ success: boolean; data: any }>({
-    queryKey: ['timelineHeatmap', from?.toISOString(), to?.toISOString(), granularity],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (from) params.set('from', from.toISOString());
-      if (to) params.set('to', to.toISOString());
 
-      const response = await fetch(`${API_BASE}/api/timeline/${granularity}/heatmap?${params}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch heatmap data');
-      }
-      return response.json();
-    },
-    refetchInterval: 60000, // Refetch every minute
-    staleTime: 30000, // Consider data fresh for 30 seconds
-  });
-};
 
-// Hook to get timeline matrix data for visualizations
-export const useTimelineMatrix = (
-  from?: Date, 
-  to?: Date, 
-  granularity: 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' = 'hour'
-) => {
-  return useQuery<{ 
-    success: boolean; 
-    data: Record<string, Record<string, number>>;
-    meta: {
-      granularity: string;
-      date_range: { from: string; to: string };
-      time_slots: number;
-    };
-  }>({
-    queryKey: ['timelineMatrix', from?.toISOString(), to?.toISOString(), granularity],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (from) params.set('from', from.toISOString());
-      if (to) params.set('to', to.toISOString());
 
-      const response = await fetch(`${API_BASE}/api/timeline/${granularity}/matrix?${params}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch matrix data');
-      }
-      return response.json();
-    },
-    refetchInterval: 60000, // Refetch every minute
-    staleTime: 30000, // Consider data fresh for 30 seconds
-  });
-};
 
 // Performance monitoring hook
 export const useTimelinePerformance = () => {

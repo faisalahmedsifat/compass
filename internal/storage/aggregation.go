@@ -172,14 +172,16 @@ func (ae *AggregationEngine) getTableName(granularity TimeGranularity) string {
 }
 
 // formatTimeBucket formats time bucket appropriately for different granularities
+// Always stores time buckets in UTC to ensure consistent queries
 func (ae *AggregationEngine) formatTimeBucket(timeBucket time.Time, granularity TimeGranularity) interface{} {
+	utcTime := timeBucket.UTC()
 	switch granularity {
 	case GranularityYear:
-		return timeBucket.Year()
+		return utcTime.Year()
 	case GranularityWeek, GranularityMonth, GranularityDay:
-		return timeBucket.Format("2006-01-02")
+		return utcTime.Format("2006-01-02")
 	default:
-		return timeBucket.Format("2006-01-02 15:04:05")
+		return utcTime.Format("2006-01-02 15:04:05")
 	}
 }
 
@@ -351,26 +353,35 @@ func (ae *AggregationEngine) GetAggregatedData(from, to time.Time, granularity T
 }
 
 // parseTimeBucket parses a time bucket string based on granularity
+// Assumes time buckets are stored in UTC and parses them accordingly
 func (ae *AggregationEngine) parseTimeBucket(timeBucketStr string, granularity TimeGranularity) (time.Time, error) {
 	switch granularity {
 	case GranularityYear:
-		// Parse year as integer, convert to time
+		// Parse year as integer, convert to time in UTC
 		year := 0
 		if _, err := fmt.Sscanf(timeBucketStr, "%d", &year); err != nil {
 			return time.Time{}, err
 		}
 		return time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC), nil
 	case GranularityMonth, GranularityWeek, GranularityDay:
-		// Try multiple date formats
+		// Parse date formats as UTC
 		formats := []string{"2006-01-02", "2006-01-02T15:04:05Z", "2006-01-02T00:00:00Z"}
 		for _, format := range formats {
 			if parsed, err := time.Parse(format, timeBucketStr); err == nil {
+				// If no timezone in format, treat as UTC
+				if format == "2006-01-02" {
+					return time.Date(parsed.Year(), parsed.Month(), parsed.Day(), 0, 0, 0, 0, time.UTC), nil
+				}
 				return parsed, nil
 			}
 		}
-		return time.Parse("2006-01-02", timeBucketStr)
+		parsed, err := time.Parse("2006-01-02", timeBucketStr)
+		if err != nil {
+			return time.Time{}, err
+		}
+		return time.Date(parsed.Year(), parsed.Month(), parsed.Day(), 0, 0, 0, 0, time.UTC), nil
 	default:
-		// Try multiple datetime formats
+		// Parse datetime formats as UTC
 		formats := []string{
 			"2006-01-02 15:04:05",
 			"2006-01-02T15:04:05Z",
@@ -379,10 +390,20 @@ func (ae *AggregationEngine) parseTimeBucket(timeBucketStr string, granularity T
 		}
 		for _, format := range formats {
 			if parsed, err := time.Parse(format, timeBucketStr); err == nil {
+				// If no timezone in format, treat as UTC
+				if format == "2006-01-02 15:04:05" || format == "2006-01-02T15:04:05" {
+					return time.Date(parsed.Year(), parsed.Month(), parsed.Day(),
+						parsed.Hour(), parsed.Minute(), parsed.Second(), parsed.Nanosecond(), time.UTC), nil
+				}
 				return parsed, nil
 			}
 		}
-		return time.Parse("2006-01-02 15:04:05", timeBucketStr)
+		parsed, err := time.Parse("2006-01-02 15:04:05", timeBucketStr)
+		if err != nil {
+			return time.Time{}, err
+		}
+		return time.Date(parsed.Year(), parsed.Month(), parsed.Day(),
+			parsed.Hour(), parsed.Minute(), parsed.Second(), parsed.Nanosecond(), time.UTC), nil
 	}
 }
 

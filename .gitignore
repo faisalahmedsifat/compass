@@ -46,6 +46,7 @@ Thumbs.db
 *.sqlite
 *.sqlite3
 compass.db
+compass_snapshot.json
 .compass/
 
 # Configuration files with secrets

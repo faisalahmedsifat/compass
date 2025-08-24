@@ -67,6 +67,11 @@ func (d *Database) GetTimelineData(from, to time.Time, granularity string) (inte
 	bucketMap := make(map[time.Time]*TimelineDataPoint)
 
 	for _, record := range records {
+		// Skip records with empty app names
+		if record.AppName == "" {
+			continue
+		}
+
 		// Get or create timeline data point
 		dataPoint, exists := bucketMap[record.TimeBucket]
 		if !exists {
@@ -80,13 +85,26 @@ func (d *Database) GetTimelineData(from, to time.Time, granularity string) (inte
 			bucketMap[record.TimeBucket] = dataPoint
 		}
 
-		// Add app summary
-		dataPoint.AppBreakdown[record.AppName] = AppSummary{
-			AppName:       record.AppName,
-			TotalTime:     record.TotalSeconds,
-			ActiveTime:    record.ActiveSeconds,
-			ActivityCount: record.ActivityCount,
-			Category:      record.Category,
+		// Add or aggregate app summary
+		if existingApp, exists := dataPoint.AppBreakdown[record.AppName]; exists {
+			// Aggregate with existing app data
+			existingApp.TotalTime += record.TotalSeconds
+			existingApp.ActiveTime += record.ActiveSeconds
+			existingApp.ActivityCount += record.ActivityCount
+			// Keep the category with the most time
+			if record.TotalSeconds > 0 {
+				existingApp.Category = record.Category
+			}
+			dataPoint.AppBreakdown[record.AppName] = existingApp
+		} else {
+			// Create new app summary
+			dataPoint.AppBreakdown[record.AppName] = AppSummary{
+				AppName:       record.AppName,
+				TotalTime:     record.TotalSeconds,
+				ActiveTime:    record.ActiveSeconds,
+				ActivityCount: record.ActivityCount,
+				Category:      record.Category,
+			}
 		}
 
 		// Update totals

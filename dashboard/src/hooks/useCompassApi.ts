@@ -1,20 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import type { Activity, AdvancedAnalytics, ApiInfo, AppTransition, CurrentWorkspace, EnergyMetrics, FocusPattern, Stats } from '../types';
+import type { Activity, AdvancedAnalytics, AppTransition, CurrentWorkspace, EnergyMetrics, FocusPattern, Stats } from '../types';
 
 const API_BASE = 'http://localhost:8080';
 
-export const useApiInfo = () => {
-  return useQuery<ApiInfo>({
-    queryKey: ['apiInfo'],
-    queryFn: async () => {
-      const response = await fetch(`${API_BASE}/`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch API info');
-      }
-      return response.json();
-    },
-  });
-};
+
 
 export const useCurrentWorkspace = () => {
   return useQuery<CurrentWorkspace>({
@@ -134,22 +123,7 @@ export const useRealTimeMetrics = () => {
   });
 };
 
-// WebSocket hook for real-time updates
-export const useWebSocket = () => {
-  return useQuery({
-    queryKey: ['websocket'],
-    queryFn: () => {
-      return new Promise((resolve) => {
-        const ws = new WebSocket('ws://localhost:8080/ws');
-        ws.onopen = () => resolve(ws);
-        ws.onerror = () => resolve(null);
-      });
-    },
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
-};
+
 
 // Helper functions to derive analytics from existing API data
 const deriveAdvancedAnalytics = (activities: Activity[], stats: Stats): AdvancedAnalytics => {
@@ -399,16 +373,3 @@ const deriveRealTimeMetrics = (current: CurrentWorkspace) => {
   };
 };
 
-export const useBufferStats = () => {
-  return useQuery({
-    queryKey: ['bufferStats'],
-    queryFn: async () => {
-      const response = await fetch(`${API_BASE}/api/buffer-stats`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch buffer stats');
-      }
-      return response.json();
-    },
-    refetchInterval: 5000, // Refetch every 5 seconds for real-time monitoring
-  });
-};
