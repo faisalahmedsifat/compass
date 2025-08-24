@@ -315,12 +315,15 @@ func (c *CaptureEngine) eventToActivity(event *types.WindowEvent) *types.Activit
 	// Categorize activity
 	category, _ := c.categorizer.Categorize(windowValues)
 
+	// Only mark as active for focus/switch events, not blur events
+	isActive := event.Type == "focus" || event.Type == "switch"
+
 	return &types.Activity{
 		Timestamp:     event.Timestamp,
 		AppName:       event.Window.AppName,
 		WindowTitle:   event.Window.Title,
 		ProcessID:     event.Window.ProcessID,
-		IsActive:      true,
+		IsActive:      isActive,
 		FocusDuration: focusDuration,
 		TotalWindows:  len(windowValues),
 		AllWindows:    windowValues,
@@ -389,12 +392,15 @@ func (c *CaptureEngine) snapshotToActivity(snapshot *types.WorkspaceSnapshot) *t
 		focusDuration = maxDuration
 	}
 
+	// Only mark as active if we have a valid active window
+	isActive := snapshot.ActiveWindow.AppName != "" && focusDuration > 0
+
 	return &types.Activity{
 		Timestamp:     snapshot.Timestamp,
 		AppName:       snapshot.ActiveWindow.AppName,
 		WindowTitle:   snapshot.ActiveWindow.Title,
 		ProcessID:     snapshot.ActiveWindow.ProcessID,
-		IsActive:      true,
+		IsActive:      isActive,
 		FocusDuration: focusDuration,
 		TotalWindows:  snapshot.WindowCount,
 		AllWindows:    snapshot.AllWindows,
