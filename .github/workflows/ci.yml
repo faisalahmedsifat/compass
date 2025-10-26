@@ -247,7 +247,7 @@ jobs:
           echo "✅ Created and pushed tag: v${VERSION}"
 
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: compass-binaries-${{ steps.version.outputs.version }}
           path: |
